@@ -1,0 +1,25 @@
+README.md
+
+.venv/
+.gitignore
+
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.log
+.DS_Store
+*.swp
+
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Version control
+.git/
+.github/
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-*

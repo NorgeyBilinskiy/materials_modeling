@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  materials-modeling:
+    build: .
+    container_name: nacl-prediction
+    ports:
+      - "8888:8888"  # Jupyter notebook
+      - "6006:6006"  # TensorBoard (if needed)
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./notebooks:/app/notebooks
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    command: jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+    
+  # Alternative service for running specific models
+  model-runner:
+    build: .
+    container_name: model-runner
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    command: python run.py --method cgcnn --train
+    depends_on:
+      - materials-modeling
