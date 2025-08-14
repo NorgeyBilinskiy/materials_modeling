@@ -1,5 +1,5 @@
 """
-Prediction module for MEGNet model.
+Prediction module for SchNet model.
 """
 
 import os
@@ -7,19 +7,19 @@ import logging
 import torch
 from pymatgen.core import Structure
 
-from data_loader.preprocess import create_graph_features
+from src.data_loader.preprocess import create_graph_features
 
 logger = logging.getLogger(__name__)
 
-def predict_megnet(
-    model_path: str = "models/megnet/best_model.pth",
+def predict_schnet(
+    model_path: str = "models/schnet/best_model.pth",
     data_path: str = "data/",
     device: str = None
 ) -> float:
     """
-    Make prediction for NaCl formation energy using trained MEGNet model.
+    Make prediction for NaCl formation energy using trained SchNet model.
     """
-    logger.info("Starting MEGNet prediction...")
+    logger.info("Starting SchNet prediction...")
     
     # Set device
     if device is None:
@@ -28,14 +28,14 @@ def predict_megnet(
     # Load trained model
     if not os.path.exists(model_path):
         logger.error(f"Model not found at {model_path}")
-        logger.info("Training a new MEGNet model...")
-        from .train import train_megnet
-        train_megnet(epochs=50, data_path=data_path)
-        model_path = "models/megnet/best_model.pth"
+        logger.info("Training a new SchNet model...")
+        from .train import train_schnet
+        train_schnet(epochs=50, data_path=data_path)
+        model_path = "models/schnet/best_model.pth"
     
     # Create model and load weights
-    from .model import create_megnet_model
-    model = create_megnet_model()
+    from .model import create_schnet_model
+    model = create_schnet_model()
     model.to(device)
     
     checkpoint = torch.load(model_path, map_location=device)
@@ -60,7 +60,8 @@ def predict_megnet(
     graph_data = Data(
         x=node_features.unsqueeze(-1),
         edge_index=edge_index,
-        edge_attr=edge_attr
+        edge_attr=edge_attr,
+        pos=torch.tensor(nacl_structure.cart_coords, dtype=torch.float)
     )
     
     # Make prediction
@@ -69,7 +70,7 @@ def predict_megnet(
         prediction = model(graph_data)
         predicted_energy = prediction.item()
     
-    logger.info(f"MEGNet predicted formation energy: {predicted_energy:.4f} eV/atom")
+    logger.info(f"SchNet predicted formation energy: {predicted_energy:.4f} eV/atom")
     
     # Compare with reference value
     reference_energy = -3.6

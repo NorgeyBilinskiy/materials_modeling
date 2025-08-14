@@ -1,5 +1,5 @@
 """
-Training module for MPNN model.
+Training module for SchNet model.
 """
 
 import os
@@ -8,22 +8,22 @@ import torch
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 from typing import Dict, Any
 
-from .model import create_mpnn_model
+from .model import create_schnet_model
 
 logger = logging.getLogger(__name__)
 
-def train_mpnn(
+def train_schnet(
     epochs: int = 100,
     batch_size: int = 32,
     lr: float = 0.001,
     data_path: str = "data/",
-    model_save_path: str = "models/mpnn/",
+    model_save_path: str = "models/schnet/",
     device: str = None
 ) -> Dict[str, Any]:
     """
-    Train MPNN model for NaCl formation energy prediction.
+    Train SchNet model for NaCl formation energy prediction.
     """
-    logger.info("Starting MPNN training...")
+    logger.info("Starting SchNet training...")
     
     # Set device
     if device is None:
@@ -33,7 +33,7 @@ def train_mpnn(
     os.makedirs(model_save_path, exist_ok=True)
     
     # Load datasets (reuse from CGCNN)
-    from models.cgcnn.train import load_datasets
+    from src.models.cgcnn.train import load_datasets
     train_dataset, val_dataset, test_dataset = load_datasets(data_path)
     
     # Create data loaders
@@ -41,13 +41,7 @@ def train_mpnn(
     val_loader = GeometricDataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     
     # Create model
-    model = create_mpnn_model(
-        num_node_features=1,
-        num_edge_features=1,
-        hidden_channels=64,
-        num_layers=3,
-        dropout=0.2
-    ).to(device)
+    model = create_schnet_model().to(device)
     
     # Create loss function and optimizer
     criterion = torch.nn.MSELoss()
@@ -116,5 +110,5 @@ def train_mpnn(
         if (epoch + 1) % 10 == 0:
             logger.info(f"Epoch {epoch+1}/{epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
     
-    logger.info("MPNN training completed!")
+    logger.info("SchNet training completed!")
     return history

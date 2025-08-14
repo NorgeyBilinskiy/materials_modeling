@@ -1,31 +1,29 @@
 """
-Training module for MEGNet model.
+Training module for MPNN model.
 """
 
 import os
-import json
 import logging
 import torch
 from torch_geometric.loader import DataLoader as GeometricDataLoader
-from tqdm import tqdm
 from typing import Dict, Any
 
-from .model import MEGNet, MEGNetLoss, create_megnet_model
+from .model import create_mpnn_model
 
 logger = logging.getLogger(__name__)
 
-def train_megnet(
+def train_mpnn(
     epochs: int = 100,
     batch_size: int = 32,
     lr: float = 0.001,
     data_path: str = "data/",
-    model_save_path: str = "models/megnet/",
+    model_save_path: str = "models/mpnn/",
     device: str = None
 ) -> Dict[str, Any]:
     """
-    Train MEGNet model for NaCl formation energy prediction.
+    Train MPNN model for NaCl formation energy prediction.
     """
-    logger.info("Starting MEGNet training...")
+    logger.info("Starting MPNN training...")
     
     # Set device
     if device is None:
@@ -35,7 +33,7 @@ def train_megnet(
     os.makedirs(model_save_path, exist_ok=True)
     
     # Load datasets (reuse from CGCNN)
-    from models.cgcnn.train import load_datasets
+    from src.models.cgcnn.train import load_datasets
     train_dataset, val_dataset, test_dataset = load_datasets(data_path)
     
     # Create data loaders
@@ -43,7 +41,7 @@ def train_megnet(
     val_loader = GeometricDataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     
     # Create model
-    model = create_megnet_model(
+    model = create_mpnn_model(
         num_node_features=1,
         num_edge_features=1,
         hidden_channels=64,
@@ -52,7 +50,7 @@ def train_megnet(
     ).to(device)
     
     # Create loss function and optimizer
-    criterion = MEGNetLoss(loss_type='mse')
+    criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     
     # Training history
@@ -118,5 +116,5 @@ def train_megnet(
         if (epoch + 1) % 10 == 0:
             logger.info(f"Epoch {epoch+1}/{epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
     
-    logger.info("MEGNet training completed!")
+    logger.info("MPNN training completed!")
     return history

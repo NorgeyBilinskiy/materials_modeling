@@ -13,15 +13,14 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 import torch
-import numpy as np
 from pymatgen.core import Structure, Lattice
 
-from data_loader.download import download_nacl_data, create_sample_nacl_data
-from data_loader.preprocess import preprocess_data, create_graph_features
-from models.cgcnn.model import create_cgcnn_model
-from models.megnet.model import create_megnet_model
-from models.schnet.model import create_schnet_model
-from models.mpnn.model import create_mpnn_model
+from src.data_loader import create_sample_nacl_data
+from src.data_loader import preprocess_data, create_graph_features
+from src.models.cgcnn import create_cgcnn_model
+from src.models import create_megnet_model
+from src.models.schnet.model import create_schnet_model
+from src.models.mpnn.model import create_mpnn_model
 
 
 class TestDataPipeline(unittest.TestCase):
@@ -45,7 +44,7 @@ class TestDataPipeline(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.test_data_dir, "nacl_info.json")))
         
         # Test training dataset creation
-        from data_loader.download import create_training_dataset
+        from src.data_loader import create_training_dataset
         create_training_dataset(self.test_data_dir)
         
         # Check if training data was created
@@ -56,7 +55,7 @@ class TestDataPipeline(unittest.TestCase):
         """Test data preprocessing functionality."""
         # Create sample data first
         create_sample_nacl_data(self.test_data_dir)
-        from data_loader.download import create_training_dataset
+        from src.data_loader import create_training_dataset
         create_training_dataset(self.test_data_dir)
         
         # Test preprocessing
@@ -202,7 +201,7 @@ class TestEndToEnd(unittest.TestCase):
         """Test complete pipeline from data to prediction."""
         # 1. Create data
         create_sample_nacl_data(self.test_data_dir)
-        from data_loader.download import create_training_dataset
+        from src.data_loader import create_training_dataset
         create_training_dataset(self.test_data_dir)
         
         # 2. Preprocess data

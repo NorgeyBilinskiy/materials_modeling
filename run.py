@@ -13,16 +13,16 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
-from data_loader.download import download_nacl_data
-from data_loader.preprocess import preprocess_data
-from models.cgcnn.train import train_cgcnn
-from models.cgcnn.predict import predict_cgcnn
-from models.megnet.train import train_megnet
-from models.megnet.predict import predict_megnet
-from models.schnet.train import train_schnet
-from models.schnet.predict import predict_schnet
-from models.mpnn.train import train_mpnn
-from models.mpnn.predict import predict_mpnn
+from src.data_loader import download_nacl_data
+from src.data_loader import preprocess_data
+from src.models.cgcnn import train_cgcnn
+from src.models.cgcnn import predict_cgcnn
+from src.models.megnet.train import train_megnet
+from src.models import predict_megnet
+from src.models.schnet.train import train_schnet
+from src.models.schnet.predict import predict_schnet
+from src.models.mpnn.train import train_mpnn
+from src.models.mpnn.predict import predict_mpnn
 
 # Setup logging
 logging.basicConfig(
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Create necessary directories
 os.makedirs('data', exist_ok=True)
-os.makedirs('models', exist_ok=True)
+os.makedirs('src/models', exist_ok=True)
 os.makedirs('logs', exist_ok=True)
 
 @click.group()
@@ -85,7 +85,7 @@ def predict(method, model_path, data_path):
     
     # Use default model path if not specified
     if not model_path:
-        model_path = f'models/{method}/best_model.pth'
+        model_path = f'src/models/{method}/best_model.pth'
     
     # Make predictions
     if method == 'cgcnn':
@@ -110,7 +110,7 @@ def compare(data_path):
     methods = ['cgcnn', 'megnet', 'schnet', 'mpnn']
     
     for method in methods:
-        model_path = f'models/{method}/best_model.pth'
+        model_path = f'src/models/{method}/best_model.pth'
         if os.path.exists(model_path):
             try:
                 if method == 'cgcnn':
@@ -177,6 +177,19 @@ def info():
     print("  python run.py predict --method cgcnn")
     print("  python run.py compare")
     print("  python run.py setup")
+
+@cli.command()
+def test_api():
+    """Test Materials Project API client and show data structure"""
+    logger.info("Testing Materials Project API client...")
+    
+    try:
+        from src.data_loader import test_get_compound_data
+        test_get_compound_data()
+        logger.info("API test completed successfully!")
+    except Exception as e:
+        logger.error(f"API test failed: {e}")
+        raise
 
 if __name__ == '__main__':
     cli()

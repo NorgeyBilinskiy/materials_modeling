@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 import shutil
-from pathlib import Path
+
 
 def test_imports():
     """Тестирование импортов основных модулей."""
@@ -16,12 +16,12 @@ def test_imports():
     
     try:
         # Тест импорта основных модулей
-        from data_loader.download import download_nacl_data, create_sample_nacl_data
-        from data_loader.preprocess import preprocess_data, create_graph_features
-        from models.cgcnn.model import create_cgcnn_model
-        from models.megnet.model import create_megnet_model
-        from models.schnet.model import create_schnet_model
-        from models.mpnn.model import create_mpnn_model
+        from src.data_loader import download_nacl_data, create_sample_nacl_data
+        from src.data_loader import preprocess_data, create_graph_features
+        from src.models.cgcnn import create_cgcnn_model
+        from src.models import create_megnet_model
+        from src.models.schnet.model import create_schnet_model
+        from src.models.mpnn.model import create_mpnn_model
         
         print("✓ Все импорты успешны")
         return True
@@ -38,7 +38,7 @@ def test_data_creation():
         test_dir = tempfile.mkdtemp()
         
         # Тест создания данных
-        from data_loader.download import create_sample_nacl_data, create_training_dataset
+        from src.data_loader import create_sample_nacl_data, create_training_dataset
         create_sample_nacl_data(test_dir)
         create_training_dataset(test_dir)
         
@@ -103,7 +103,7 @@ def test_graph_features():
     
     try:
         from pymatgen.core import Structure, Lattice
-        from data_loader.preprocess import create_graph_features
+        from src.data_loader import create_graph_features
         
         # Создание тестовой структуры
         lattice = Lattice.cubic(5.64)

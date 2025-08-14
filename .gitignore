@@ -26,3 +26,7 @@ wheels/
 # Environment variables
 .env
 settings/materialsproject_api/token.env
+
+# Temporal data
+/temporary_data/cif_structures/*
+!/temporary_data/cif_structures/.gitkeep

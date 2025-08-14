@@ -1,5 +1,5 @@
 """
-Prediction module for MPNN model.
+Prediction module for MEGNet model.
 """
 
 import os
@@ -7,19 +7,19 @@ import logging
 import torch
 from pymatgen.core import Structure
 
-from data_loader.preprocess import create_graph_features
+from src.data_loader.preprocess import create_graph_features
 
 logger = logging.getLogger(__name__)
 
-def predict_mpnn(
-    model_path: str = "models/mpnn/best_model.pth",
+def predict_megnet(
+    model_path: str = "models/megnet/best_model.pth",
     data_path: str = "data/",
     device: str = None
 ) -> float:
     """
-    Make prediction for NaCl formation energy using trained MPNN model.
+    Make prediction for NaCl formation energy using trained MEGNet model.
     """
-    logger.info("Starting MPNN prediction...")
+    logger.info("Starting MEGNet prediction...")
     
     # Set device
     if device is None:
@@ -28,14 +28,14 @@ def predict_mpnn(
     # Load trained model
     if not os.path.exists(model_path):
         logger.error(f"Model not found at {model_path}")
-        logger.info("Training a new MPNN model...")
-        from .train import train_mpnn
-        train_mpnn(epochs=50, data_path=data_path)
-        model_path = "models/mpnn/best_model.pth"
+        logger.info("Training a new MEGNet model...")
+        from .train import train_megnet
+        train_megnet(epochs=50, data_path=data_path)
+        model_path = "models/megnet/best_model.pth"
     
     # Create model and load weights
-    from .model import create_mpnn_model
-    model = create_mpnn_model()
+    from .model import create_megnet_model
+    model = create_megnet_model()
     model.to(device)
     
     checkpoint = torch.load(model_path, map_location=device)
@@ -69,7 +69,7 @@ def predict_mpnn(
         prediction = model(graph_data)
         predicted_energy = prediction.item()
     
-    logger.info(f"MPNN predicted formation energy: {predicted_energy:.4f} eV/atom")
+    logger.info(f"MEGNet predicted formation energy: {predicted_energy:.4f} eV/atom")
     
     # Compare with reference value
     reference_energy = -3.6
