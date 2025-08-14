@@ -7,7 +7,7 @@ import logging
 import torch
 from pymatgen.core import Structure
 
-from src.data_loader.preprocess import create_graph_features
+from src.data_preprocessing import create_graph_features
 
 logger = logging.getLogger(__name__)
 
@@ -53,16 +53,11 @@ def predict_schnet(
     )
     
     # Convert structure to graph
-    node_features, edge_index, edge_attr = create_graph_features(nacl_structure)
+    x, edge_index, edge_attr, pos = create_graph_features(nacl_structure)
     
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
-    graph_data = Data(
-        x=node_features.unsqueeze(-1),
-        edge_index=edge_index,
-        edge_attr=edge_attr,
-        pos=torch.tensor(nacl_structure.cart_coords, dtype=torch.float)
-    )
+    graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, pos=pos)
     
     # Make prediction
     with torch.no_grad():
@@ -79,3 +74,36 @@ def predict_schnet(
     logger.info(f"Absolute error: {error:.4f} eV/atom")
     
     return predicted_energy
+
+
+def predict_multiple_structures(
+    model_path: str,
+    structures: list[Structure],
+    device: str = None
+) -> list[float]:
+    """Predict for multiple structures using a trained SchNet model."""
+    logger.info(f"Making SchNet predictions for {len(structures)} structures...")
+
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Load model
+    from .model import create_schnet_model
+    model = create_schnet_model()
+    model.to(device)
+
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
+
+    predictions: list[float] = []
+    from torch_geometric.data import Data
+    with torch.no_grad():
+        for structure in structures:
+            x, edge_index, edge_attr, pos = create_graph_features(structure)
+            graph_data = Data(x=x.unsqueeze(-1), edge_index=edge_index, edge_attr=edge_attr, pos=pos)
+            graph_data = graph_data.to(device)
+            pred = model(graph_data)
+            predictions.append(float(pred.item()))
+
+    return predictions

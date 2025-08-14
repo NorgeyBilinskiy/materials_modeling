@@ -70,7 +70,7 @@ def train_cgcnn(
     criterion = CGCNNLoss(loss_type='mse')
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=10, verbose=True
+        optimizer, mode='min', factor=0.5, patience=10
     )
     
     # Training history
@@ -205,9 +205,9 @@ def load_datasets(data_path: str):
     processed_path = os.path.join(data_path, "processed")
     
     # Load datasets
-    train_dataset = torch.load(os.path.join(processed_path, "train.pt"))
-    val_dataset = torch.load(os.path.join(processed_path, "val.pt"))
-    test_dataset = torch.load(os.path.join(processed_path, "test.pt"))
+    train_dataset = torch.load(os.path.join(processed_path, "train.pt"), weights_only=False)
+    val_dataset = torch.load(os.path.join(processed_path, "val.pt"), weights_only=False)
+    test_dataset = torch.load(os.path.join(processed_path, "test.pt"), weights_only=False)
     
     logger.info(f"Loaded datasets - Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}")
     

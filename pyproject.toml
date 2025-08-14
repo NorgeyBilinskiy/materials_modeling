@@ -9,5 +9,6 @@ dependencies = [
     "loguru>=0.7.3",
     "pyaml>=25.7.0",
     "pymatgen>=2025.6.14",
+    "torch-geometric>=2.6.1",
     "torch>=2.8.0",
 ]

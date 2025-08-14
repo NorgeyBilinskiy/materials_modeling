@@ -10,7 +10,7 @@ from typing import List, Dict
 from pymatgen.core import Structure
 
 from .train import load_trained_model
-from src.data_loader.preprocess import create_graph_features
+from src.data_preprocessing import create_graph_features
 
 logger = logging.getLogger(__name__)
 
@@ -59,15 +59,11 @@ def predict_cgcnn(
     )
     
     # Convert structure to graph
-    node_features, edge_index, edge_attr = create_graph_features(nacl_structure)
+    x, edge_index, edge_attr, _ = create_graph_features(nacl_structure)
     
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
-    graph_data = Data(
-        x=node_features.unsqueeze(-1),  # Add feature dimension
-        edge_index=edge_index,
-        edge_attr=edge_attr
-    )
+    graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
     
     # Make prediction
     with torch.no_grad():
@@ -115,15 +111,11 @@ def predict_multiple_structures(
     
     for i, structure in enumerate(structures):
         # Convert structure to graph
-        node_features, edge_index, edge_attr = create_graph_features(structure)
+        x, edge_index, edge_attr, _ = create_graph_features(structure)
         
         # Create PyTorch Geometric Data object
         from torch_geometric.data import Data
-        graph_data = Data(
-            x=node_features.unsqueeze(-1),
-            edge_index=edge_index,
-            edge_attr=edge_attr
-        )
+        graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
         
         # Make prediction
         with torch.no_grad():
@@ -167,15 +159,11 @@ def predict_with_uncertainty(
     model.train()  # Enable dropout for uncertainty estimation
     
     # Convert structure to graph
-    node_features, edge_index, edge_attr = create_graph_features(structure)
+    x, edge_index, edge_attr, _ = create_graph_features(structure)
     
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
-    graph_data = Data(
-        x=node_features.unsqueeze(-1),
-        edge_index=edge_index,
-        edge_attr=edge_attr
-    )
+    graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
     
     # Make multiple predictions
     predictions = []

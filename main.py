@@ -3,6 +3,9 @@ import sys
 from loguru import logger
 
 from src import MaterialsDataManager
+from src.data_preprocessing import prepare_datasets_from_cif
+from src.train_validate_models import train_and_validate_all_models
+from src.predict_models import run_predictions_for_selected_materials
 
 
 def main():
@@ -45,6 +48,24 @@ def main():
             
             logger.info("Crystal structures saved as .cif files for CGCNN models")
             logger.info(f"Check directory: {manager.config.temporary_data_dir}/cif_structures/")
+
+            # Prepare datasets from CIFs
+            logger.info("Preparing datasets from CIF files...")
+            prepare_datasets_from_cif()
+
+            # Train and validate all models
+            logger.info("Training and validating models...")
+            histories = train_and_validate_all_models()
+            trained_ok = [m for m, h in histories.items() if not isinstance(h, dict) or 'error' not in h]
+            logger.info(f"Models trained: {', '.join(trained_ok) if trained_ok else 'none'}")
+
+            # Run predictions for selected materials
+            logger.info("Running predictions for selected materials...")
+            pred_results = run_predictions_for_selected_materials()
+            if pred_results:
+                for model_name, by_material in pred_results.items():
+                    for material, value in by_material.items():
+                        logger.info(f"Prediction [{model_name}] {material}: {value:.4f} eV/atom")
             
             return materials_data
             

@@ -6,7 +6,7 @@ Based on the original CGCNN paper: https://doi.org/10.1103/PhysRevLett.120.14530
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import CGConv, global_mean_pool
+from torch_geometric.nn import GCNConv, global_mean_pool
 from torch_geometric.data import Data
 from typing import Optional
 
@@ -43,15 +43,10 @@ class CGCNN(nn.Module):
         # Node embedding layer
         self.node_embedding = nn.Embedding(100, hidden_channels)  # Support up to 100 elements
         
-        # Edge embedding layer
-        self.edge_embedding = nn.Linear(num_edge_features, hidden_channels)
-        
-        # CGConv layers
+        # Convolutional layers (use GCNConv for stability across versions)
         self.conv_layers = nn.ModuleList()
         for _ in range(num_layers):
-            self.conv_layers.append(
-                CGConv(hidden_channels, hidden_channels, num_edge_features)
-            )
+            self.conv_layers.append(GCNConv(hidden_channels, hidden_channels))
         
         # Global pooling and output layers
         self.pool = global_mean_pool
@@ -80,12 +75,9 @@ class CGCNN(nn.Module):
         # Node embedding
         x = self.node_embedding(x.squeeze(-1))  # Remove extra dimension if present
         
-        # Edge embedding
-        edge_attr = self.edge_embedding(edge_attr)
-        
-        # CGConv layers
+        # Graph conv layers
         for conv in self.conv_layers:
-            x = conv(x, edge_index, edge_attr)
+            x = conv(x, edge_index)
             x = F.relu(x)
             x = self.dropout_layer(x)
         

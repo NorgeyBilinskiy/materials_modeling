@@ -29,4 +29,6 @@ settings/materialsproject_api/token.env
 
 # Temporal data
 /temporary_data/cif_structures/*
-!/temporary_data/cif_structures/.gitkeep
+!/temporary_data/processed/.gitkeep
+/temporary_data/processed/*
+!/temporary_data/processed/.gitkeep

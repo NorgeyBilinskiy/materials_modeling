@@ -17,6 +17,7 @@ class Config:
         self.PATH_TO_VALIDATE: Dict[str, Path] = {
             "materialsproject_token": self.BASE_DIR / "settings" / "materialsproject_api" / "token.env",
             "formulas_substances": self.BASE_DIR / "settings" / "materials" / "selection_materials.yaml",
+            "predict_substances": self.BASE_DIR / "settings" / "materials" / "predict_material.yaml",
         }
 
         # === Path Validation ===
@@ -107,4 +108,28 @@ class Config:
             
         except Exception as e:
             logger.error(f"Failed to load materials list from YAML file: {e}")
+            raise
+
+    def get_predict_materials_list(self) -> List[str]:
+        """Get the list of materials for prediction from the YAML configuration file.
+        
+        Returns:
+            List[str]: List of material formulas for prediction
+            
+        Raises:
+            Exception: If there's an error reading or parsing the YAML file
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(str(self.PATH_TO_VALIDATE["predict_substances"]))
+            materials = yaml_data.get("predict_substances", [])
+            
+            if not materials:
+                logger.warning("No materials for prediction found in the YAML configuration file")
+                return []
+                
+            logger.debug(f"Loaded {len(materials)} materials for prediction: {materials}")
+            return materials
+            
+        except Exception as e:
+            logger.error(f"Failed to load prediction materials list from YAML file: {e}")
             raise

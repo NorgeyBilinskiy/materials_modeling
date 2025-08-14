@@ -1,19 +1,18 @@
 """
-SchNet (Schrödinger Network) model implementation.
-Simplified version for NaCl formation energy prediction.
+SchNet-like model without torch-cluster dependency.
+Re-implemented using standard GCN layers to avoid radius_graph at runtime.
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import SchNet as PyGSchNet
+from torch_geometric.nn import GCNConv, global_mean_pool
 from torch_geometric.data import Data
 
+
 class SchNet(nn.Module):
-    """
-    Simplified SchNet model for crystal property prediction.
-    """
-    
+    """Lightweight SchNet replacement using GCN layers."""
+
     def __init__(
         self,
         hidden_channels: int = 64,
@@ -24,34 +23,47 @@ class SchNet(nn.Module):
         dropout: float = 0.2
     ):
         super().__init__()
-        
-        # Use PyTorch Geometric's SchNet implementation
-        self.schnet = PyGSchNet(
-            hidden_channels=hidden_channels,
-            num_filters=num_filters,
-            num_interactions=num_interactions,
-            num_gaussians=num_gaussians,
-            cutoff=cutoff
+
+        self.hidden_channels = hidden_channels
+        self.num_layers = max(1, num_interactions)
+        self.dropout_layer = nn.Dropout(dropout)
+
+        # Node embedding from atomic number
+        self.node_embedding = nn.Embedding(100, hidden_channels)
+
+        # Stacked GCN layers
+        self.conv_layers = nn.ModuleList(
+            [GCNConv(hidden_channels, hidden_channels) for _ in range(self.num_layers)]
         )
-        
-        # Additional output layer for regression
-        self.output_layer = nn.Sequential(
-            nn.Linear(hidden_channels, hidden_channels // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_channels // 2, 1)
-        )
-        
+
+        # Readout and regression head
+        self.pool = global_mean_pool
+        self.fc1 = nn.Linear(hidden_channels, hidden_channels // 2)
+        self.fc2 = nn.Linear(hidden_channels // 2, hidden_channels // 4)
+        self.out = nn.Linear(hidden_channels // 4, 1)
+
     def forward(self, data: Data) -> torch.Tensor:
-        """
-        Forward pass through the SchNet model.
-        """
-        # Use PyG SchNet for feature extraction
-        x = self.schnet(data.x, data.pos, data.batch)
-        
-        # Output layer for regression
-        x = self.output_layer(x)
-        
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Embed atomic numbers
+        x = self.node_embedding(x.squeeze(-1))
+
+        # Message passing
+        for conv in self.conv_layers:
+            x = conv(x, edge_index)
+            x = F.relu(x)
+            x = self.dropout_layer(x)
+
+        # Global pooling
+        x = self.pool(x, batch)
+
+        # MLP head
+        x = F.relu(self.fc1(x))
+        x = self.dropout_layer(x)
+        x = F.relu(self.fc2(x))
+        x = self.dropout_layer(x)
+        x = self.out(x)
+
         return x.squeeze(-1)
 
 def create_schnet_model(
@@ -63,7 +75,7 @@ def create_schnet_model(
     dropout: float = 0.2
 ) -> SchNet:
     """
-    Create a SchNet model with default parameters.
+    Create a SchNet-like model with default parameters.
     """
     return SchNet(
         hidden_channels=hidden_channels,
