@@ -25,5 +25,4 @@ wheels/
 
 # Environment variables
 .env
-#settings/materialsproject_api/token.env
-
+settings/materialsproject_api/token.env
