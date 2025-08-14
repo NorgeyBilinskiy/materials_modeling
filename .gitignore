@@ -23,3 +23,7 @@ wheels/
 .zip
 .rar
 
+# Environment variables
+.env
+#settings/materialsproject_api/token.env
+
