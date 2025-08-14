@@ -1,33 +1,24 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    curl \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+COPY --from=ghcr.io/astral-sh/uv:0.5.2 /uv /uvx /bin/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+COPY uv.lock pyproject.toml /
 
-# Copy project files
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+ENV TZ=Europe/Moscow
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+ENV FORCE_COLOR=1
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p data models logs notebooks
-
-# Expose port for Jupyter
-EXPOSE 8888
-
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# Default command
-CMD ["python", "run.py", "--help"]
+CMD ["uv", "run", "--no-dev", "python", "main.py"]

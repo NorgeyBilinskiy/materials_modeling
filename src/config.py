@@ -10,14 +10,23 @@ from .utils import FileValidator, FileHandler, DirectoryValidator
 
 class Config:
     """Configuration class for managing application settings and paths."""
-    
+
     def __init__(self):
         # === Path Configurations ===
         self.BASE_DIR = Path.cwd()
         self.PATH_TO_VALIDATE: Dict[str, Path] = {
-            "materialsproject_token": self.BASE_DIR / "settings" / "materialsproject_api" / "token.env",
-            "formulas_substances": self.BASE_DIR / "settings" / "materials" / "selection_materials.yaml",
-            "predict_substances": self.BASE_DIR / "settings" / "materials" / "predict_material.yaml",
+            "materialsproject_token": self.BASE_DIR
+            / "settings"
+            / "materialsproject_api"
+            / "token.env",
+            "formulas_substances": self.BASE_DIR
+            / "settings"
+            / "materials"
+            / "selection_materials.yaml",
+            "predict_substances": self.BASE_DIR
+            / "settings"
+            / "materials"
+            / "predict_material.yaml",
         }
 
         # === Path Validation ===
@@ -46,7 +55,9 @@ class Config:
     def _ensure_directories_exist(self) -> None:
         """Create necessary directories if they don't exist."""
         try:
-            DirectoryValidator.create_directory_if_not_exists(str(self.temporary_data_dir))
+            DirectoryValidator.create_directory_if_not_exists(
+                str(self.temporary_data_dir)
+            )
             logger.debug(f"Temporary data directory ensured: {self.temporary_data_dir}")
         except Exception as e:
             logger.error(f"Failed to create temporary data directory: {e}")
@@ -63,16 +74,18 @@ class Config:
     def _validate_configuration(self) -> None:
         """Validate that all required configuration values are present."""
         self.API_TOKEN_MATERIALS_PROJECT = os.getenv("MATERIALS_PROJECT_API_KEY")
-        
+
         if not self.API_TOKEN_MATERIALS_PROJECT:
-            logger.warning("MATERIALS_PROJECT_API_KEY not found in environment variables")
+            logger.warning(
+                "MATERIALS_PROJECT_API_KEY not found in environment variables"
+            )
             self.API_TOKEN_MATERIALS_PROJECT = None
         else:
             logger.debug("Materials Project API key loaded successfully")
 
     def get_material_project_info(self) -> Optional[str]:
         """Get the Materials Project API token.
-        
+
         Returns:
             Optional[str]: The API token if available, None otherwise
         """
@@ -80,7 +93,7 @@ class Config:
 
     def get_temporary_data_path(self) -> Path:
         """Get the path to the temporary data directory.
-        
+
         Returns:
             Path: Path to the temporary data directory
         """
@@ -88,48 +101,60 @@ class Config:
 
     def get_materials_list(self) -> List[str]:
         """Get the list of materials from the YAML configuration file.
-        
+
         Returns:
             List[str]: List of material formulas from the configuration file
-            
+
         Raises:
             Exception: If there's an error reading or parsing the YAML file
         """
         try:
-            yaml_data = FileHandler.load_yaml(str(self.PATH_TO_VALIDATE["formulas_substances"]))
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["formulas_substances"])
+            )
             materials = yaml_data.get("formulas_substances", [])
-            
+
             if not materials:
                 logger.warning("No materials found in the YAML configuration file")
                 return []
-                
-            logger.debug(f"Loaded {len(materials)} materials from configuration: {materials}")
+
+            logger.debug(
+                f"Loaded {len(materials)} materials from configuration: {materials}"
+            )
             return materials
-            
+
         except Exception as e:
             logger.error(f"Failed to load materials list from YAML file: {e}")
             raise
 
     def get_predict_materials_list(self) -> List[str]:
         """Get the list of materials for prediction from the YAML configuration file.
-        
+
         Returns:
             List[str]: List of material formulas for prediction
-            
+
         Raises:
             Exception: If there's an error reading or parsing the YAML file
         """
         try:
-            yaml_data = FileHandler.load_yaml(str(self.PATH_TO_VALIDATE["predict_substances"]))
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["predict_substances"])
+            )
             materials = yaml_data.get("predict_substances", [])
-            
+
             if not materials:
-                logger.warning("No materials for prediction found in the YAML configuration file")
+                logger.warning(
+                    "No materials for prediction found in the YAML configuration file"
+                )
                 return []
-                
-            logger.debug(f"Loaded {len(materials)} materials for prediction: {materials}")
+
+            logger.debug(
+                f"Loaded {len(materials)} materials for prediction: {materials}"
+            )
             return materials
-            
+
         except Exception as e:
-            logger.error(f"Failed to load prediction materials list from YAML file: {e}")
+            logger.error(
+                f"Failed to load prediction materials list from YAML file: {e}"
+            )
             raise

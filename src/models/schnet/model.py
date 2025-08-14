@@ -20,7 +20,7 @@ class SchNet(nn.Module):
         num_interactions: int = 3,
         num_gaussians: int = 50,
         cutoff: float = 10.0,
-        dropout: float = 0.2
+        dropout: float = 0.2,
     ):
         super().__init__()
 
@@ -66,13 +66,14 @@ class SchNet(nn.Module):
 
         return x.squeeze(-1)
 
+
 def create_schnet_model(
     hidden_channels: int = 64,
     num_filters: int = 64,
     num_interactions: int = 3,
     num_gaussians: int = 50,
     cutoff: float = 10.0,
-    dropout: float = 0.2
+    dropout: float = 0.2,
 ) -> SchNet:
     """
     Create a SchNet-like model with default parameters.
@@ -83,5 +84,5 @@ def create_schnet_model(
         num_interactions=num_interactions,
         num_gaussians=num_gaussians,
         cutoff=cutoff,
-        dropout=dropout
+        dropout=dropout,
     )

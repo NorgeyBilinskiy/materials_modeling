@@ -13,8 +13,12 @@ from .mpnn.train import train_mpnn
 from .mpnn.predict import predict_mpnn
 
 __all__ = [
-    'train_cgcnn', 'predict_cgcnn',
-    'train_megnet', 'predict_megnet',
-    'train_schnet', 'predict_schnet',
-    'train_mpnn', 'predict_mpnn'
+    "train_cgcnn",
+    "predict_cgcnn",
+    "train_megnet",
+    "predict_megnet",
+    "train_schnet",
+    "predict_schnet",
+    "train_mpnn",
+    "predict_mpnn",
 ]

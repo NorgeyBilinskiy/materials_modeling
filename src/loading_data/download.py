@@ -31,11 +31,13 @@ class MaterialsProjectClient:
         """
         if not api_key or api_key.strip() == "":
             raise ValueError("API key cannot be empty")
-        
+
         self.api_key: str = api_key
         logger.debug("MaterialsProjectClient initialized successfully")
 
-    def get_compound_data(self, formula: str, return_format: str = "dataframe") -> Union[pd.DataFrame, List[Dict[str, Any]]]:
+    def get_compound_data(
+        self, formula: str, return_format: str = "dataframe"
+    ) -> Union[pd.DataFrame, List[Dict[str, Any]]]:
         """
         Get crystal structures of materials in CIF format for CGCNN models.
 
@@ -66,26 +68,28 @@ class MaterialsProjectClient:
             results: List[Dict[str, Any]] = []
             for entry in entries:
                 if isinstance(entry, dict):
-                    material_id = entry.get('material_id')
-                    formula_pretty = entry.get('formula_pretty', formula)
+                    material_id = entry.get("material_id")
+                    formula_pretty = entry.get("formula_pretty", formula)
                 else:
-                    material_id = getattr(entry, 'material_id', None)
-                    formula_pretty = getattr(entry, 'formula_pretty', formula)
-                
+                    material_id = getattr(entry, "material_id", None)
+                    formula_pretty = getattr(entry, "formula_pretty", formula)
+
                 if not material_id:
                     logger.warning(f"Could not get material_id for entry: {entry}")
                     continue
-                
+
                 try:
                     with MPRester(self.api_key) as mpr_detail:
                         structure = mpr_detail.get_structure_by_material_id(material_id)
-                        
+
                         cif_text: str = ""
                         if structure is not None:
                             try:
                                 cif_text = str(CifWriter(structure))
                             except Exception as err:
-                                logger.error(f"Failed to generate CIF for {material_id}: {err}")
+                                logger.error(
+                                    f"Failed to generate CIF for {material_id}: {err}"
+                                )
                                 cif_text = ""
                         else:
                             logger.warning(f"Structure not found for {material_id}")
@@ -97,9 +101,11 @@ class MaterialsProjectClient:
                                 "structure_cif": cif_text,
                             }
                         )
-                        
+
                 except Exception as detail_err:
-                    logger.warning(f"Failed to get structure for {material_id}: {detail_err}")
+                    logger.warning(
+                        f"Failed to get structure for {material_id}: {detail_err}"
+                    )
                     results.append(
                         {
                             "material_id": material_id,
@@ -109,7 +115,7 @@ class MaterialsProjectClient:
                     )
 
             logger.info(f"Retrieved {len(results)} records for formula '{formula}'")
-            
+
             if return_format == "dataframe":
                 df = pd.DataFrame(results)
                 return df
@@ -135,28 +141,30 @@ class MaterialsProjectClient:
         try:
             with MPRester(self.api_key) as mpr:
                 structure = mpr.get_structure_by_material_id(material_id)
-                
+
                 if not structure:
                     logger.warning(f"Structure with ID '{material_id}' not found")
                     return None
-                
+
                 cif_text: str = ""
                 try:
                     cif_text = str(CifWriter(structure))
                 except Exception as err:
                     logger.error(f"Failed to generate CIF: {err}")
                     cif_text = ""
-                
+
                 return {
                     "material_id": material_id,
                     "structure_cif": cif_text,
                 }
-                
+
         except Exception as e:
             logger.error(f"Error requesting structure by ID: {e}")
             raise
 
-    def search_materials(self, criteria: Dict[str, Any], properties: Optional[List[str]] = None) -> pd.DataFrame:
+    def search_materials(
+        self, criteria: Dict[str, Any], properties: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
         Search crystal structures of materials by criteria for CGCNN models.
 
@@ -175,94 +183,97 @@ class MaterialsProjectClient:
             ]
 
         logger.info(f"Searching crystal structures by criteria: {criteria}")
-        
+
         try:
             with MPRester(self.api_key) as mpr:
-                if 'formula' in criteria:
-                    entries = mpr.summary.search(formula=criteria['formula'])
-                elif 'material_id' in criteria:
-                    entries = mpr.summary.search(material_ids=[criteria['material_id']])
+                if "formula" in criteria:
+                    entries = mpr.summary.search(formula=criteria["formula"])
+                elif "material_id" in criteria:
+                    entries = mpr.summary.search(material_ids=[criteria["material_id"]])
                 else:
                     entries = mpr.summary.search()
-                
+
             if not entries:
                 logger.warning("No crystal structures found for given criteria")
                 return pd.DataFrame()
-            
+
             results = []
             for entry in entries:
                 material_id = None
                 formula_pretty = None
-                
+
                 if isinstance(entry, dict):
-                    material_id = entry.get('material_id')
-                    formula_pretty = entry.get('formula_pretty', '')
+                    material_id = entry.get("material_id")
+                    formula_pretty = entry.get("formula_pretty", "")
                 else:
-                    material_id = getattr(entry, 'material_id', None)
-                    formula_pretty = getattr(entry, 'formula_pretty', '')
-                
+                    material_id = getattr(entry, "material_id", None)
+                    formula_pretty = getattr(entry, "formula_pretty", "")
+
                 if material_id:
                     try:
                         with MPRester(self.api_key) as mpr_detail:
-                            structure = mpr_detail.get_structure_by_material_id(material_id)
+                            structure = mpr_detail.get_structure_by_material_id(
+                                material_id
+                            )
                             cif_text = str(CifWriter(structure)) if structure else ""
                     except Exception as e:
                         logger.warning(f"Failed to get CIF for {material_id}: {e}")
                         cif_text = ""
-                    
+
                     result = {
                         "material_id": material_id,
                         "formula_pretty": formula_pretty,
                         "structure_cif": cif_text,
                     }
                     results.append(result)
-                
+
             df = pd.DataFrame(results)
             logger.info(f"Found {len(df)} crystal structures")
             return df
-            
+
         except Exception as e:
             logger.error(f"Error searching crystal structures: {e}")
             raise
 
-    def save_structures_as_cif(self, materials_data: Dict[str, pd.DataFrame], save_dir: str = "cif_structures") -> None:
+    def save_structures_as_cif(
+        self, materials_data: Dict[str, pd.DataFrame], save_dir: str = "cif_structures"
+    ) -> None:
         """
         Save crystal structures as separate .cif files for CGCNN models.
-        
+
         Args:
             materials_data: Dictionary with material data
             save_dir: Directory for saving .cif files
         """
         from pathlib import Path
-        
+
         save_path = Path(save_dir)
         save_path.mkdir(parents=True, exist_ok=True)
-        
+
         total_saved = 0
-        
+
         for material, data in materials_data.items():
             if data.empty:
                 continue
-                
+
             material_dir = save_path / material.lower()
             material_dir.mkdir(exist_ok=True)
-            
+
             for _, row in data.iterrows():
-                material_id = row.get('material_id', 'unknown')
-                cif_content = row.get('structure_cif', '')
-                
+                material_id = row.get("material_id", "unknown")
+                cif_content = row.get("structure_cif", "")
+
                 if cif_content and cif_content.strip():
                     cif_filename = f"{material_id}.cif"
                     cif_filepath = material_dir / cif_filename
-                    
+
                     try:
-                        with open(cif_filepath, 'w', encoding='utf-8') as f:
+                        with open(cif_filepath, "w", encoding="utf-8") as f:
                             f.write(cif_content)
                         total_saved += 1
                     except Exception as e:
                         logger.error(f"Error saving {cif_filepath}: {e}")
                 else:
                     logger.warning(f"Empty CIF content for {material_id}")
-        
-        logger.info(f"Saved {total_saved} .cif files to {save_path}")
 
+        logger.info(f"Saved {total_saved} .cif files to {save_path}")

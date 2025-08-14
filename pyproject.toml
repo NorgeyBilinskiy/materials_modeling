@@ -12,3 +12,8 @@ dependencies = [
     "torch-geometric>=2.6.1",
     "torch>=2.8.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.9",
+]

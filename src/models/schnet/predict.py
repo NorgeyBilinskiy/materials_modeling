@@ -11,97 +11,101 @@ from src.data_preprocessing import create_graph_features
 
 logger = logging.getLogger(__name__)
 
+
 def predict_schnet(
     model_path: str = "models/schnet/best_model.pth",
     data_path: str = "data/",
-    device: str = None
+    device: str = None,
 ) -> float:
     """
     Make prediction for NaCl formation energy using trained SchNet model.
     """
     logger.info("Starting SchNet prediction...")
-    
+
     # Set device
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # Load trained model
     if not os.path.exists(model_path):
         logger.error(f"Model not found at {model_path}")
         logger.info("Training a new SchNet model...")
         from .train import train_schnet
+
         train_schnet(epochs=50, data_path=data_path)
         model_path = "models/schnet/best_model.pth"
-    
+
     # Create model and load weights
     from .model import create_schnet_model
+
     model = create_schnet_model()
     model.to(device)
-    
+
     checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
-    
+
     # Create NaCl structure for prediction
     from pymatgen.core import Lattice
-    
+
     lattice = Lattice.cubic(5.64)
     nacl_structure = Structure(
-        lattice=lattice,
-        species=["Na", "Cl"],
-        coords=[[0, 0, 0], [0.5, 0.5, 0.5]]
+        lattice=lattice, species=["Na", "Cl"], coords=[[0, 0, 0], [0.5, 0.5, 0.5]]
     )
-    
+
     # Convert structure to graph
     x, edge_index, edge_attr, pos = create_graph_features(nacl_structure)
-    
+
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
+
     graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, pos=pos)
-    
+
     # Make prediction
     with torch.no_grad():
         graph_data = graph_data.to(device)
         prediction = model(graph_data)
         predicted_energy = prediction.item()
-    
+
     logger.info(f"SchNet predicted formation energy: {predicted_energy:.4f} eV/atom")
-    
+
     # Compare with reference value
     reference_energy = -3.6
     error = abs(predicted_energy - reference_energy)
     logger.info(f"Reference value: {reference_energy} eV/atom")
     logger.info(f"Absolute error: {error:.4f} eV/atom")
-    
+
     return predicted_energy
 
 
 def predict_multiple_structures(
-    model_path: str,
-    structures: list[Structure],
-    device: str = None
+    model_path: str, structures: list[Structure], device: str = None
 ) -> list[float]:
     """Predict for multiple structures using a trained SchNet model."""
     logger.info(f"Making SchNet predictions for {len(structures)} structures...")
 
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load model
     from .model import create_schnet_model
+
     model = create_schnet_model()
     model.to(device)
 
     checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
     predictions: list[float] = []
     from torch_geometric.data import Data
+
     with torch.no_grad():
         for structure in structures:
             x, edge_index, edge_attr, pos = create_graph_features(structure)
-            graph_data = Data(x=x.unsqueeze(-1), edge_index=edge_index, edge_attr=edge_attr, pos=pos)
+            graph_data = Data(
+                x=x.unsqueeze(-1), edge_index=edge_index, edge_attr=edge_attr, pos=pos
+            )
             graph_data = graph_data.to(device)
             pred = model(graph_data)
             predictions.append(float(pred.item()))

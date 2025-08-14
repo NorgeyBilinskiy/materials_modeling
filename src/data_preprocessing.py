@@ -26,7 +26,9 @@ warnings.filterwarnings(
 )
 
 
-def create_graph_features(structure: Structure, cutoff: float = 5.0) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def create_graph_features(
+    structure: Structure, cutoff: float = 5.0
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Create graph features from a pymatgen Structure.
 
     Returns:
@@ -104,18 +106,18 @@ def _fetch_formation_energy(api_key: str, material_id: str) -> float:
             if summaries:
                 entry = summaries[0]
                 # Try common field names
-                value = getattr(entry, 'formation_energy_per_atom', None)
+                value = getattr(entry, "formation_energy_per_atom", None)
                 if value is None and isinstance(entry, dict):
-                    value = entry.get('formation_energy_per_atom')
+                    value = entry.get("formation_energy_per_atom")
                 if value is None:
                     # Try energy_per_atom if formation energy is unavailable
-                    value = getattr(entry, 'energy_per_atom', None)
+                    value = getattr(entry, "energy_per_atom", None)
                     if value is None and isinstance(entry, dict):
-                        value = entry.get('energy_per_atom')
-                return float(value) if value is not None else float('nan')
+                        value = entry.get("energy_per_atom")
+                return float(value) if value is not None else float("nan")
     except Exception as e:
         logger.warning(f"Failed to fetch formation energy for {material_id}: {e}")
-    return float('nan')
+    return float("nan")
 
 
 def _material_formula_from_dirname(dirname: str) -> str:
@@ -138,15 +140,15 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
     """
     cfg = Config()
     temp_dir = Path(cfg.get_temporary_data_path())
-    cif_root = temp_dir / 'cif_structures'
-    processed_dir = temp_dir / 'processed'
+    cif_root = temp_dir / "cif_structures"
+    processed_dir = temp_dir / "processed"
     _ensure_dir(processed_dir)
 
     if not cif_root.exists():
         logger.error(f"CIF directory not found: {cif_root}")
         return {
-            'data_path': temp_dir,
-            'processed_dir': processed_dir,
+            "data_path": temp_dir,
+            "processed_dir": processed_dir,
         }
 
     predict_materials = [m.lower() for m in cfg.get_predict_materials_list()]
@@ -154,6 +156,7 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
     # Collect all samples
     from torch_geometric.data import Data
+
     train_samples: List[Data] = []
     val_samples: List[Data] = []
     test_samples: List[Data] = []
@@ -163,7 +166,7 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
         material_formula_lc = material_dir.name.lower()
         is_reserved = material_formula_lc in predict_materials
 
-        cif_files = sorted(material_dir.glob('*.cif'))
+        cif_files = sorted(material_dir.glob("*.cif"))
         if not cif_files:
             continue
 
@@ -175,17 +178,22 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
                 # Parse material_id from filename (e.g., mp-12345.cif)
                 material_id = cif_fp.stem
-                y_value = float('nan')
+                y_value = float("nan")
                 if api_key:
                     y_value = _fetch_formation_energy(api_key, material_id)
 
                 if math.isnan(y_value):
-                    logger.warning(f"Target (formation energy) missing for {material_id}; skipping sample")
+                    logger.warning(
+                        f"Target (formation energy) missing for {material_id}; skipping sample"
+                    )
                     continue
 
                 data_obj = Data(
-                    x=x, edge_index=edge_index, edge_attr=edge_attr, pos=pos,
-                    y=torch.tensor(y_value, dtype=torch.float32)
+                    x=x,
+                    edge_index=edge_index,
+                    edge_attr=edge_attr,
+                    pos=pos,
+                    y=torch.tensor(y_value, dtype=torch.float32),
                 )
                 # Attach metadata for later aggregation
                 data_obj.material = material_formula_lc
@@ -217,28 +225,28 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
             torch.save(tensors, str(path))
             logger.info(f"Saved {len(tensors)} samples to {path}")
         else:
-            logger.warning(f"No samples to save for {name}; creating empty list at {path}")
+            logger.warning(
+                f"No samples to save for {name}; creating empty list at {path}"
+            )
             torch.save([], str(path))
         return path
 
-    train_path = _save_list(train_samples, 'train')
-    val_path = _save_list(val_samples, 'val')
-    test_path = _save_list(test_samples, 'test')
-    predict_path = _save_list(predict_samples, 'predict')
+    train_path = _save_list(train_samples, "train")
+    val_path = _save_list(val_samples, "val")
+    test_path = _save_list(test_samples, "test")
+    predict_path = _save_list(predict_samples, "predict")
 
     return {
-        'data_path': temp_dir,
-        'processed_dir': processed_dir,
-        'train': train_path,
-        'val': val_path,
-        'test': test_path,
-        'predict': predict_path,
+        "data_path": temp_dir,
+        "processed_dir": processed_dir,
+        "train": train_path,
+        "val": val_path,
+        "test": test_path,
+        "predict": predict_path,
     }
 
 
 __all__ = [
-    'prepare_datasets_from_cif',
-    'create_graph_features',
+    "prepare_datasets_from_cif",
+    "create_graph_features",
 ]
-
-
