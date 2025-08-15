@@ -36,23 +36,6 @@ def predict_megnet(
         train_megnet(epochs=50, data_path=data_path)
         model_path = "models/megnet/best_model.pth"
 
-    # Create model and load weights
-    from .model import create_megnet_model
-
-    # Create model with hyperparameters from checkpoint if present
-    from .model import create_megnet_model
-
-    checkpoint = torch.load(model_path, map_location=device)
-    hparams = checkpoint.get("hparams", {})
-    model = create_megnet_model(
-        hidden_channels=hparams.get("hidden_channels", 64),
-        num_layers=hparams.get("num_layers", 3),
-        dropout=hparams.get("dropout", 0.2),
-    )
-    model.to(device)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    model.eval()
-
     # Create NaCl structure for prediction
     from pymatgen.core import Lattice
 
@@ -63,6 +46,24 @@ def predict_megnet(
 
     # Convert structure to graph
     x, edge_index, edge_attr, _ = create_graph_features(nacl_structure)
+    node_feat_dim = int(x.shape[1]) if x.dim() == 2 else 1
+    edge_feat_dim = int(edge_attr.shape[1]) if edge_attr is not None else 1
+
+    # Create model and load weights
+    from .model import create_megnet_model
+
+    checkpoint = torch.load(model_path, map_location=device)
+    hparams = checkpoint.get("hparams", {})
+    model = create_megnet_model(
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
+        hidden_channels=hparams.get("hidden_channels", 64),
+        num_layers=hparams.get("num_layers", 3),
+        dropout=hparams.get("dropout", 0.2),
+    )
+    model.to(device)
+    model.load_state_dict(checkpoint["model_state_dict"], strict=False)
+    model.eval()
 
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data

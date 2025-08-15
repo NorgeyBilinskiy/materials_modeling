@@ -75,6 +75,7 @@ def train_schnet(
     val_loader = GeometricDataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     # Create model
+    # For SchNet-like model we still embed atomic numbers, but we can tune num_interactions
     model = create_schnet_model(
         hidden_channels=hidden_channels,
         num_interactions=num_interactions,

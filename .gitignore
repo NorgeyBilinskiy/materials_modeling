@@ -29,11 +29,11 @@ settings/materialsproject_api/token.env
 
 # Temporal data
 /temporary_data/cif_structures/*
-!/temporary_data/processed/.gitkeep
+!/temporary_data/cif_structures/.gitkeep
 /temporary_data/processed/*
 !/temporary_data/processed/.gitkeep
 
-# Model weights
+# Model weights and training artifacts
 /models/cgcnn/*
 !/models/cgcnn/.gitkeep
 /models/megnet/*
@@ -43,7 +43,23 @@ settings/materialsproject_api/token.env
 /models/schnet/*
 !/models/schnet/.gitkeep
 
+# Specific model file types
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+training_history.json
+hparams.json
+
+# HPO trials and experiments
+*/hpo_trials/*
+*/experiments/*
+*/checkpoints/*
+
 # Logs
 /logs/*
 !/logs/.gitkeep
-!/logs/.materials_modeling_20250815_161303.log
+!/logs/.materials_modeling_20250815_231541.log

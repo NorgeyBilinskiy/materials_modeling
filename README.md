@@ -21,7 +21,7 @@ This project demonstrates the application of various Graph Neural Network (GNN) 
 ## Theoretical Background
 
 ### Formation Energy
-Formation energy is a key thermodynamic property that determines the stability of crystalline structures. For NaCl (table salt), the reference value is approximately **-3.6 eV/atom**.
+Formation energy is a key thermodynamic property that determines the stability of crystalline structures. For NaCl (table salt), the reference value is approximately **-2.1 eV/atom**.
 
 ### Why Graph Neural Networks?
 Crystal structures can be naturally represented as graphs where:
@@ -76,8 +76,10 @@ materials_modeling/
 │   └── materialsproject_api/          # API configuration
 ├── src/                               # Source code
 │   ├── config.py                      # Configuration management
-│   ├── data_preprocessing.py          # Data preprocessing and graph creation
+│   ├── data_preprocessing.py          # Data preprocessing and graph creation (multi-dimensional node/edge features, RBF)
 │   ├── get_data.py                    # Data download from Materials Project
+│   ├── loading_data/                 # Data downloading utilities (Materials Project)
+│   │   └── download.py               # Download & caching logic
 │   ├── models/                        # Model implementations
 │   │   ├── cgcnn/                    # CGCNN model
 │   │   ├── megnet/                    # MEGNet model
@@ -86,7 +88,8 @@ materials_modeling/
 │   │   └── hpo.py                     # Hyperparameter optimization
 │   ├── train_validate_models.py       # Training orchestration
 │   ├── predict_models.py              # Prediction pipeline
-│   └── utils/                         # Utility functions
+│   ├── app.py                         # Main application logic (called from main.py)
+│   └── utils/                         # Utility functions (seed, file utils, metrics)
 ├── models/                            # Trained model checkpoints
 ├── temporary_data/                    # Downloaded and processed data
 ├── logs/                              # Application logs
@@ -113,8 +116,18 @@ The project uses a comprehensive YAML-based configuration system located in the 
 - **Hyperparameter optimization** settings (initial points, iterations)
 - **Training epochs** (HPO trials vs. final training)
 - **Random seeds** for reproducibility
-- **Graph creation parameters** (neighbor cutoff, minimum edges)
+- **Graph creation parameters** (neighbor cutoff, minimum edges, RBF expansion)
 - **Target scaling** options (standard, minmax, robust)
+
+#### Graph Features (example)
+```yaml
+graph_features:
+  neighbor_cutoff: 5.0      # neighbor search radius, Å
+  min_edges: 1              # minimal edges per graph (fallback FC if sparse)
+  rbf:
+    num_gaussians: 32       # number of Gaussian bases for distance expansion
+    gamma: null             # if null, chosen automatically from spacing
+```
 
 ## Quick Start
 
@@ -198,7 +211,7 @@ python main.py  # Automatically detects existing CIF files
 ### Expected Results
 
 For NaCl prediction:
-- **Reference value**: ~-3.6 eV/atom
+- **Reference value**: ~-2.1 eV/atom
 - **CGCNN**: Expected close to reference
 - **MEGNet**: Stable predictions with good accuracy
 - **SchNet**: Physically justified results
@@ -209,6 +222,8 @@ For NaCl prediction:
 ### 🔬 **Advanced Data Processing**
 - Automatic CIF file download from Materials Project
 - Crystal structure to graph conversion
+- Multi-dimensional node features: Z, group, period, electronegativity, covalent radius, atomic mass, Mendeleev number
+- Edge features: bond distance + Gaussian RBF expansion (configurable)
 - Configurable data splitting strategies
 - Target variable scaling options
 
@@ -216,6 +231,7 @@ For NaCl prediction:
 - Bayesian optimization with configurable bounds
 - Separate training regimes for HPO trials and final training
 - Automatic hyperparameter saving and loading
+- Learning rate scheduling (ReduceLROnPlateau) and early stopping for stability
 
 ### 📊 **Comprehensive Logging**
 - Console and file logging with rotation
@@ -265,16 +281,33 @@ For NaCl prediction:
 
 ### 📄 **`result_models.json`**
 - Structured prediction results
-- Training history summaries
+- Training history summaries (best_epoch, losses)
+- Final metrics per model: RMSE, MAE, R², MSE
 - Metadata and timestamps
+
+#### Example final metrics section
+```json
+{
+  "final_metrics": {
+    "cgcnn": { "rmse": 0.18, "mae": 0.10, "r2": 0.91, "mse": 0.03 },
+    "megnet": { "rmse": 0.43, "mae": 0.33, "r2": 0.52, "mse": 0.19 }
+  }
+}
+```
+
+## Metrics
+During training, test metrics are computed and logged for each model:
+- RMSE, MAE, R², MSE
+These are also saved to `result_models.json` under `final_metrics`.
 
 ## Troubleshooting
 
 ### Common Issues
-1. **Memory errors**: Reduce batch size in hyperparameter limits
-2. **Download failures**: Check Materials Project API token
-3. **Model loading errors**: Ensure hyperparameter consistency
-4. **Empty validation sets**: Check material structure assignments
+- **Memory errors**: Reduce batch size in hyperparameter limits
+- **Download failures**: Check Materials Project API token
+- **Model loading errors / size mismatches**: If you recently changed graph features (e.g., enabled RBF or multi-dimensional node features), old checkpoints may be incompatible. Delete outdated files in `models/**/best_model.pth` and retrain.
+- **Embedding expects Long indices**: This occurs if a checkpoint was trained with integer atom indices, but the current model receives continuous features. Retrain with the new feature pipeline, or ensure the model is constructed with continuous input projection (already handled in code).
+- **Empty validation sets**: Check material structure assignments
 
 ### Debug Mode
 Enable detailed logging by modifying `data_preprocessing.yaml`:

@@ -1,4 +1,5 @@
 from typing import Dict, List
+from pathlib import Path
 
 from loguru import logger
 
@@ -9,9 +10,7 @@ from .models import (
     predict_schnet,
     predict_mpnn,
 )
-
 from .config import Config
-from pathlib import Path
 
 
 def run_predictions_for_selected_materials() -> Dict[str, Dict[str, float]]:

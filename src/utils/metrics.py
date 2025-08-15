@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Sequence, Dict, Any
 import math
+from typing import Sequence, Dict, Any
 
 
 def _to_list(values) -> list[float]:

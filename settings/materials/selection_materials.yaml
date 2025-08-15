@@ -18,8 +18,3 @@ formulas_substances:
   - CsCl
   - CsBr
   - CsI
-
-#  # Double halides (can be used to test model stability)
-#  - K3AlF6
-#  - Na3AlF6
-#  - Na2MgCl4

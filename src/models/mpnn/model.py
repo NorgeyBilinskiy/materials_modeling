@@ -72,8 +72,13 @@ class MPNN(nn.Module):
         self.num_layers = num_layers
         self.dropout = dropout
 
-        # Node embedding layer
-        self.node_embedding = nn.Embedding(100, hidden_channels)
+        # Node input: allow continuous multi-d features or atomic number embedding
+        if num_node_features and num_node_features > 1:
+            self.node_input = nn.Linear(num_node_features, hidden_channels)
+            self.use_embedding = False
+        else:
+            self.node_embedding = nn.Embedding(100, hidden_channels)
+            self.use_embedding = True
 
         # Edge embedding layer
         self.edge_embedding = nn.Linear(num_edge_features, hidden_channels)
@@ -106,8 +111,11 @@ class MPNN(nn.Module):
             data.batch,
         )
 
-        # Node embedding
-        x = self.node_embedding(x.squeeze(-1))
+        # Node features to hidden
+        if self.use_embedding:
+            x = self.node_embedding(x.squeeze(-1))
+        else:
+            x = self.node_input(x.float())
 
         # Edge embedding
         edge_attr = self.edge_embedding(edge_attr)

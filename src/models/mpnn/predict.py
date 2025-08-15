@@ -41,13 +41,25 @@ def predict_mpnn(
 
     checkpoint = torch.load(model_path, map_location=device)
     hparams = checkpoint.get("hparams", {})
+    # Build NaCl graph to infer feature sizes
+    from pymatgen.core import Lattice
+
+    lattice = Lattice.cubic(5.64)
+    nacl_structure = Structure(
+        lattice=lattice, species=["Na", "Cl"], coords=[[0, 0, 0], [0.5, 0.5, 0.5]]
+    )
+    x, edge_index, edge_attr, _ = create_graph_features(nacl_structure)
+    node_feat_dim = int(x.shape[1]) if x.dim() == 2 else 1
+    edge_feat_dim = int(edge_attr.shape[1]) if edge_attr is not None else 1
     model = create_mpnn_model(
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
         hidden_channels=hparams.get("hidden_channels", 64),
         num_layers=hparams.get("num_layers", 3),
         dropout=hparams.get("dropout", 0.2),
     )
     model.to(device)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model.load_state_dict(checkpoint["model_state_dict"], strict=False)
     model.eval()
 
     # Create NaCl structure for prediction

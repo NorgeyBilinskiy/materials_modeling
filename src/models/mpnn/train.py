@@ -11,7 +11,7 @@ from typing import Dict, Any
 
 from .model import MPNNLoss, create_mpnn_model
 from ...utils import set_random_seeds
-from ...utils.metrics import compute_regression_metrics
+from ...utils import compute_regression_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +75,16 @@ def train_mpnn(
     val_loader = GeometricDataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     # Create model
+    # Infer feature sizes from a sample batch
+    sample_data = train_dataset[0]
+    node_feat_dim = int(sample_data.x.shape[1]) if sample_data.x.dim() == 2 else 1
+    edge_feat_dim = (
+        int(sample_data.edge_attr.shape[1]) if sample_data.edge_attr is not None else 1
+    )
+
     model = create_mpnn_model(
-        num_node_features=1,
-        num_edge_features=1,
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
         hidden_channels=hidden_channels,
         num_layers=num_layers,
         dropout=dropout,

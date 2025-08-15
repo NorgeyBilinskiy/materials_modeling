@@ -7,6 +7,7 @@ import torch
 import numpy as np
 from loguru import logger
 from pymatgen.core import Structure
+from pymatgen.core.periodic_table import Element
 from pymatgen.io.cif import CifParser
 from pymatgen.ext.matproj import MPRester
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
@@ -37,9 +38,9 @@ def create_graph_features(
         min_edges: Minimum number of edges. If None, uses default from config.
 
     Returns:
-        x: Node features (atomic numbers) shape [num_nodes, 1] (dtype long)
+        x: Node features matrix [num_nodes, F]. Column 0 holds atomic number (float).
         edge_index: Edge indices shape [2, num_edges]
-        edge_attr: Edge features (distances) shape [num_edges, 1]
+        edge_attr: Edge features matrix [num_edges, E] with distance and RBFs
         pos: Atomic cartesian positions shape [num_nodes, 3]
     """
     if cutoff is None or min_edges is None:
@@ -54,9 +55,44 @@ def create_graph_features(
             cutoff = cutoff or 5.0
             min_edges = min_edges or 1
 
-    # Node features: atomic numbers
-    atomic_numbers = [site.specie.Z for site in structure.sites]
-    x = torch.tensor(atomic_numbers, dtype=torch.long).unsqueeze(-1)
+    # Configuration for graph features
+    rbf_num = 32
+    rbf_gamma = None
+    try:
+        cfg = Config()
+        preprocessing_config = cfg.get_preprocessing_config()
+        graph_cfg = preprocessing_config.get("graph_features", {})
+        rbf_cfg = graph_cfg.get("rbf", {})
+        rbf_num = int(rbf_cfg.get("num_gaussians", 32))
+        rbf_gamma = rbf_cfg.get("gamma", None)
+    except Exception:
+        pass
+
+    # Node features: atomic descriptors
+    node_features: List[List[float]] = []
+    for site in structure.sites:
+        Z = float(site.specie.Z)
+        el: Element = Element.from_Z(int(Z))
+        # Collect a compact set of stable descriptors
+        group = (
+            float(el.group) if getattr(el, "group", None) is not None else float("nan")
+        )
+        period = float(el.row) if getattr(el, "row", None) is not None else float("nan")
+        en = float(el.X) if el.X is not None else float("nan")
+        cov_r = (
+            float(el.atomic_radius) if el.atomic_radius is not None else float("nan")
+        )
+        mass = float(el.atomic_mass) if el.atomic_mass is not None else float("nan")
+        mende = float(el.mendeleev_no) if el.mendeleev_no is not None else float("nan")
+        node_features.append([Z, group, period, en, cov_r, mass, mende])
+
+    # Replace NaNs with per-feature means, then remaining with zeros
+    x_np = np.array(node_features, dtype=np.float32)
+    col_means = np.nanmean(x_np, axis=0)
+    inds = np.where(np.isnan(x_np))
+    x_np[inds] = np.take(col_means, inds[1])
+    x_np = np.nan_to_num(x_np, nan=0.0, posinf=0.0, neginf=0.0)
+    x = torch.tensor(x_np, dtype=torch.float32)
 
     # Positions
     pos = torch.tensor(np.array(structure.cart_coords, dtype=np.float32))
@@ -71,7 +107,7 @@ def create_graph_features(
         neighbors = structure.get_neighbors(site, r=cutoff)
         for n in neighbors:
             j = n.index
-            if i != j:
+            if i == j:
                 continue
             d = float(n.nn_distance)
             edge_src.append(i)
@@ -94,7 +130,24 @@ def create_graph_features(
         )
 
     edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
-    edge_attr = torch.tensor(edge_dist, dtype=torch.float32).unsqueeze(-1)
+
+    # Edge attributes: distance + RBF expansion
+    if len(edge_dist) == 0:
+        edge_attr = torch.zeros((0, 1 + rbf_num), dtype=torch.float32)
+    else:
+        dists = np.array(edge_dist, dtype=np.float32)
+        # RBF centers from 0 to cutoff
+        centers = np.linspace(0.0, float(cutoff), num=rbf_num, dtype=np.float32)
+        if rbf_gamma is None:
+            # A reasonable default so neighboring centers overlap
+            delta = centers[1] - centers[0] if rbf_num > 1 else max(1.0, float(cutoff))
+            rbf_gamma_val = float(1.0 / (2 * (delta**2)))
+        else:
+            rbf_gamma_val = float(rbf_gamma)
+        # Compute Gaussian RBFs
+        rbf = np.exp(-rbf_gamma_val * (dists[:, None] - centers[None, :]) ** 2)
+        edge_attr_np = np.concatenate([dists[:, None], rbf], axis=1)
+        edge_attr = torch.tensor(edge_attr_np, dtype=torch.float32)
 
     return x, edge_index, edge_attr, pos
 

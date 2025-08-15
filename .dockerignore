@@ -1,4 +1,7 @@
 README.md
+result_models.json
+LICENSE
+.python-version
 
 .venv/
 .gitignore

@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 from datetime import datetime
-from loguru import logger
 from typing import Dict, Any
+
+from loguru import logger
 
 
 def save_results_to_json(

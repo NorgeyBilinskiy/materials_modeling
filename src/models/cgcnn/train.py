@@ -13,7 +13,7 @@ from typing import Dict, Any
 
 from .model import CGCNN, CGCNNLoss, create_cgcnn_model
 from ...utils import set_random_seeds
-from ...utils.metrics import compute_regression_metrics
+from ...utils import compute_regression_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +77,16 @@ def train_cgcnn(
     )
 
     # Create model
+    # Infer feature sizes from a sample batch
+    sample_data = train_loader.dataset[0]
+    node_feat_dim = int(sample_data.x.shape[1]) if sample_data.x.dim() == 2 else 1
+    edge_feat_dim = (
+        int(sample_data.edge_attr.shape[1]) if sample_data.edge_attr is not None else 1
+    )
+
     model = create_cgcnn_model(
-        num_node_features=1,
-        num_edge_features=1,
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
         hidden_channels=hidden_channels,
         num_layers=num_layers,
         dropout=dropout,
@@ -334,7 +341,12 @@ def evaluate_model(model: CGCNN, data_loader, criterion, device: str) -> tuple:
     return total_loss / num_batches, total_mae / num_batches
 
 
-def load_trained_model(model_path: str, device: str = None) -> CGCNN:
+def load_trained_model(
+    model_path: str,
+    device: str = None,
+    num_node_features: int | None = None,
+    num_edge_features: int | None = None,
+) -> CGCNN:
     """
     Load a trained CGCNN model.
 
@@ -354,8 +366,8 @@ def load_trained_model(model_path: str, device: str = None) -> CGCNN:
 
     # Create model using saved hyperparameters if available
     model = create_cgcnn_model(
-        num_node_features=1,
-        num_edge_features=1,
+        num_node_features=(num_node_features or 1),
+        num_edge_features=(num_edge_features or 1),
         hidden_channels=hparams.get("hidden_channels", 64),
         num_layers=hparams.get("num_layers", 3),
         dropout=hparams.get("dropout", 0.2),
@@ -363,7 +375,7 @@ def load_trained_model(model_path: str, device: str = None) -> CGCNN:
     model.to(device)
 
     # Load weights
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model.load_state_dict(checkpoint["model_state_dict"], strict=False)
 
     logger.info(f"Loaded CGCNN model from {model_path}")
     return model

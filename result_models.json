@@ -1,97 +1,97 @@
 {
   "metadata": {
-    "timestamp": "2025-08-15T19:47:42.728398",
-    "log_file": "logs\\materials_modeling_20250815_194251.log",
+    "timestamp": "2025-08-15T23:24:28.998186",
+    "log_file": "logs\\materials_modeling_20250815_231541.log",
     "description": "Materials modeling results - predictions, training histories, and final metrics"
   },
   "predictions": {
     "cgcnn": {
       "nacl": {
-        "value": -1.9793686866760254,
+        "value": -2.1010521252950034,
         "unit": "eV/atom",
-        "formatted": "-1.9794 eV/atom"
+        "formatted": "-2.1011 eV/atom"
       }
     },
     "megnet": {
       "nacl": {
-        "value": -1.3494174480438232,
+        "value": -2.1859874725341797,
         "unit": "eV/atom",
-        "formatted": "-1.3494 eV/atom"
+        "formatted": "-2.1860 eV/atom"
       }
     },
     "schnet": {
       "nacl": {
-        "value": -1.5611851215362549,
+        "value": -0.7188284993171692,
         "unit": "eV/atom",
-        "formatted": "-1.5612 eV/atom"
+        "formatted": "-0.7188 eV/atom"
       }
     },
     "mpnn": {
       "nacl": {
-        "value": -0.7245819568634033,
+        "value": -1.1731805801391602,
         "unit": "eV/atom",
-        "formatted": "-0.7246 eV/atom"
+        "formatted": "-1.1732 eV/atom"
       }
     }
   },
   "training_histories": {
     "cgcnn": {
       "status": "success",
-      "best_val_loss": 6.859308143702947e-08,
-      "best_epoch": 19,
-      "final_train_loss": 0.004413131158798933,
-      "final_val_loss": 0.0016818218864500523,
+      "best_val_loss": 5.3318686354941747e-08,
+      "best_epoch": 14,
+      "final_train_loss": 0.04854404553771019,
+      "final_val_loss": 0.0016584570985287428,
       "total_epochs": 300
     },
     "megnet": {
       "status": "success",
-      "best_val_loss": 2.0932935740347602e-07,
-      "best_epoch": 24,
-      "final_train_loss": 0.8391789793968201,
-      "final_val_loss": 0.010372870601713657,
-      "total_epochs": 45
+      "best_val_loss": 2.6019847609859426e-07,
+      "best_epoch": 18,
+      "final_train_loss": 0.0317591093480587,
+      "final_val_loss": 0.04662323743104935,
+      "total_epochs": 39
     },
     "schnet": {
       "status": "success",
-      "best_val_loss": 1.1171571713930462e-05,
-      "best_epoch": 24,
-      "final_train_loss": 0.40344712138175964,
-      "final_val_loss": 0.0735810324549675,
-      "total_epochs": 45
+      "best_val_loss": 9.979572723750607e-10,
+      "best_epoch": 23,
+      "final_train_loss": 0.05736352503299713,
+      "final_val_loss": 0.017926093190908432,
+      "total_epochs": 44
     },
     "mpnn": {
       "status": "success",
-      "best_val_loss": 6.749912427039817e-05,
-      "best_epoch": 22,
-      "final_train_loss": 0.123661108314991,
-      "final_val_loss": 0.00889186654239893,
-      "total_epochs": 43
+      "best_val_loss": 2.696472165553132e-07,
+      "best_epoch": 20,
+      "final_train_loss": 0.10719539783895016,
+      "final_val_loss": 0.014160053804516792,
+      "total_epochs": 41
     }
   },
   "final_metrics": {
     "cgcnn": {
-      "rmse": 0.18593011384944239,
-      "mae": 0.10387056715348188,
-      "r2": 0.9127727638499412,
-      "mse": 0.03457000723606661
+      "rmse": 0.21294932722139168,
+      "mae": 0.17067179960363052,
+      "r2": 0.8855791457005023,
+      "mse": 0.04534741596404334
     },
     "megnet": {
-      "rmse": 0.43631199211572397,
-      "mae": 0.33463771904216094,
-      "r2": 0.5196620049429059,
-      "mse": 0.19036815446399155
+      "rmse": 0.2321013564298195,
+      "mae": 0.16960845274083755,
+      "r2": 0.864072290593284,
+      "mse": 0.05387103965656211
     },
     "schnet": {
-      "rmse": 0.4742775495172922,
-      "mae": 0.42981378471150117,
-      "r2": 0.43243216414807917,
-      "mse": 0.22493919397612755
+      "rmse": 0.23297981821282607,
+      "mae": 0.19265765302321491,
+      "r2": 0.8630414197069469,
+      "mse": 0.054279595694481486
     },
     "mpnn": {
-      "rmse": 0.4476656505200987,
-      "mae": 0.35104233377120075,
-      "r2": 0.49433815415266413,
-      "mse": 0.20040453465558314
+      "rmse": 0.3954410467884884,
+      "mae": 0.2866026513716754,
+      "r2": 0.6054372012194208,
+      "mse": 0.15637362148517547
     }
   }
 }

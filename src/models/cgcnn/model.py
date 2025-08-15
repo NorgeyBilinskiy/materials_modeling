@@ -40,10 +40,14 @@ class CGCNN(nn.Module):
         self.num_layers = num_layers
         self.dropout = dropout
 
-        # Node embedding layer
-        self.node_embedding = nn.Embedding(
-            100, hidden_channels
-        )  # Support up to 100 elements
+        # Node input: support either integer atomic numbers (Embedding)
+        # or continuous multi-dimensional node features (Linear projection)
+        if num_node_features and num_node_features > 1:
+            self.node_input = nn.Linear(num_node_features, hidden_channels)
+            self.use_embedding = False
+        else:
+            self.node_embedding = nn.Embedding(100, hidden_channels)
+            self.use_embedding = True
 
         # Convolutional layers (use GCNConv for stability across versions)
         self.conv_layers = nn.ModuleList()
@@ -79,8 +83,11 @@ class CGCNN(nn.Module):
             data.batch,
         )
 
-        # Node embedding
-        x = self.node_embedding(x.squeeze(-1))  # Remove extra dimension if present
+        # Node features to hidden
+        if self.use_embedding:
+            x = self.node_embedding(x.squeeze(-1))
+        else:
+            x = self.node_input(x.float())
 
         # Graph conv layers
         for conv in self.conv_layers:

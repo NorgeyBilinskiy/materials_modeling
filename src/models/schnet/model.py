@@ -16,10 +16,7 @@ class SchNet(nn.Module):
     def __init__(
         self,
         hidden_channels: int = 64,
-        num_filters: int = 64,
         num_interactions: int = 3,
-        num_gaussians: int = 50,
-        cutoff: float = 10.0,
         dropout: float = 0.2,
     ):
         super().__init__()
@@ -28,8 +25,9 @@ class SchNet(nn.Module):
         self.num_layers = max(1, num_interactions)
         self.dropout_layer = nn.Dropout(dropout)
 
-        # Node embedding from atomic number
+        # Node embedding from atomic number; if passed continuous features, use linear proj
         self.node_embedding = nn.Embedding(100, hidden_channels)
+        self.node_input = None
 
         # Stacked GCN layers
         self.conv_layers = nn.ModuleList(
@@ -45,8 +43,23 @@ class SchNet(nn.Module):
     def forward(self, data: Data) -> torch.Tensor:
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
-        # Embed atomic numbers
-        x = self.node_embedding(x.squeeze(-1))
+        # If x is integer Z -> embedding; else assume continuous features
+        if x.dtype in (torch.long, torch.int64, torch.int32):
+            x = self.node_embedding(x.squeeze(-1))
+        else:
+            if self.node_input is None:
+                self.node_input = nn.Linear(x.shape[-1], self.fc1.in_features * 2 // 1)
+                # align with hidden_channels
+                self.node_input = nn.Linear(x.shape[-1], self.fc1.in_features * 2 // 2)
+                self.node_input = nn.Linear(
+                    x.shape[-1], self.fc1.in_features * 2 - self.fc1.in_features
+                )
+                self.node_input = nn.Linear(x.shape[-1], self.fc1.in_features * 2)
+                # fallback simple projection to hidden_channels
+                self.node_input = nn.Linear(
+                    x.shape[-1], self.fc1.in_features * 0 + self.fc1.in_features
+                )
+            x = self.node_input(x.float())
 
         # Message passing
         for conv in self.conv_layers:

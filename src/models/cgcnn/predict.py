@@ -48,9 +48,6 @@ def predict_cgcnn(
         train_cgcnn(epochs=50, data_path=data_path)
         model_path = "models/cgcnn/best_model.pth"
 
-    model = load_trained_model(model_path, device)
-    model.eval()
-
     # Create NaCl structure for prediction
     from pymatgen.core import Lattice
 
@@ -60,8 +57,19 @@ def predict_cgcnn(
         lattice=lattice, species=["Na", "Cl"], coords=[[0, 0, 0], [0.5, 0.5, 0.5]]
     )
 
-    # Convert structure to graph
+    # Convert structure to graph and infer feature sizes
     x, edge_index, edge_attr, _ = create_graph_features(nacl_structure)
+    node_feat_dim = int(x.shape[1]) if x.dim() == 2 else 1
+    edge_feat_dim = int(edge_attr.shape[1]) if edge_attr is not None else 1
+
+    # Load model with correct feature sizes
+    model = load_trained_model(
+        model_path,
+        device,
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
+    )
+    model.eval()
 
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
@@ -105,8 +113,18 @@ def predict_multiple_structures(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load model
-    model = load_trained_model(model_path, device)
+    # Use first structure to infer feature sizes and load model
+    if not structures:
+        return []
+    x0, ei0, ea0, _ = create_graph_features(structures[0])
+    node_feat_dim = int(x0.shape[1]) if x0.dim() == 2 else 1
+    edge_feat_dim = int(ea0.shape[1]) if ea0 is not None else 1
+    model = load_trained_model(
+        model_path,
+        device,
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
+    )
     model.eval()
 
     predictions = []
@@ -157,8 +175,15 @@ def predict_with_uncertainty(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load model
-    model = load_trained_model(model_path, device)
+    # Build graph to infer sizes and load model
+    node_feat_dim = int(x.shape[1]) if x.dim() == 2 else 1
+    edge_feat_dim = int(edge_attr.shape[1]) if edge_attr is not None else 1
+    model = load_trained_model(
+        model_path,
+        device,
+        num_node_features=node_feat_dim,
+        num_edge_features=edge_feat_dim,
+    )
     model.train()  # Enable dropout for uncertainty estimation
 
     # Convert structure to graph

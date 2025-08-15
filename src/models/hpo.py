@@ -14,7 +14,6 @@ from .cgcnn.train import train_cgcnn
 from .megnet.train import train_megnet
 from .schnet.train import train_schnet
 from .mpnn.train import train_mpnn
-from ..utils import set_random_seeds
 
 
 MODEL_TRAINERS: Dict[str, Callable[..., Dict[str, Any]]] = {

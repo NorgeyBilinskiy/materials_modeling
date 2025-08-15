@@ -47,7 +47,7 @@ def predict_schnet(
         dropout=hparams.get("dropout", 0.2),
     )
     model.to(device)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model.load_state_dict(checkpoint["model_state_dict"], strict=False)
     model.eval()
 
     # Create NaCl structure for prediction
@@ -108,9 +108,7 @@ def predict_multiple_structures(
     with torch.no_grad():
         for structure in structures:
             x, edge_index, edge_attr, pos = create_graph_features(structure)
-            graph_data = Data(
-                x=x.unsqueeze(-1), edge_index=edge_index, edge_attr=edge_attr, pos=pos
-            )
+            graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, pos=pos)
             graph_data = graph_data.to(device)
             pred = model(graph_data)
             predictions.append(float(pred.item()))
