@@ -60,3 +60,6 @@ hparams.json
 */checkpoints/*
 
 # Logs
+/logs/*
+!/logs/.gitkeep
+!/logs/.materials_modeling_20250815_231541.log
