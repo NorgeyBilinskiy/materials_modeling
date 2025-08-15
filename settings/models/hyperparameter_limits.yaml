@@ -1,6 +1,6 @@
 bayes_optimization:
-  init_points: 5   # initial random evaluations
-  n_iter: 20       # additional optimization steps
+  init_points: 10   # initial random evaluations
+  n_iter: 40       # additional optimization steps
 
 models:
   cgcnn:

@@ -13,6 +13,7 @@ from typing import Dict, Any
 
 from .model import CGCNN, CGCNNLoss, create_cgcnn_model
 from ...utils import set_random_seeds
+from ...utils.metrics import compute_regression_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -241,9 +242,33 @@ def train_cgcnn(
     except Exception:
         pass
 
-    # Evaluate on test set
-    test_loss, test_mae = evaluate_model(model, test_loader, criterion, device)
-    logger.info(f"Test Loss: {test_loss:.4f}, Test MAE: {test_mae:.4f}")
+    # Evaluate on test set and compute detailed metrics
+    y_true_all = []
+    y_pred_all = []
+    model.eval()
+    with torch.no_grad():
+        for batch in test_loader:
+            batch = batch.to(device)
+            outputs = model(batch)
+            y_pred_all.append(outputs.detach().cpu().view(-1))
+            y_true_all.append(batch.y.detach().cpu().view(-1))
+
+    if y_true_all and y_pred_all:
+        y_true_cat = torch.cat(y_true_all).numpy()
+        y_pred_cat = torch.cat(y_pred_all).numpy()
+        test_metrics = compute_regression_metrics(y_true_cat, y_pred_cat)
+        history["test_metrics"] = test_metrics
+        logger.info(
+            "Test metrics - RMSE: %.6f, MAE: %.6f, R2: %.6f, MSE: %.6f"
+            % (
+                test_metrics.get("rmse", float("nan")),
+                test_metrics.get("mae", float("nan")),
+                test_metrics.get("r2", float("nan")),
+                test_metrics.get("mse", float("nan")),
+            )
+        )
+    else:
+        logger.warning("Could not compute test metrics: empty predictions or targets")
 
     logger.info("CGCNN training completed!")
     return history

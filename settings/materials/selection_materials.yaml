@@ -4,20 +4,20 @@ formulas_substances:
   - KBr
   - LiF
 
-#  # Other alkali metals with halogens
-#  - NaBr
-#  - NaI
-#  - KF
-#  - KI
-#  - LiCl
-#  - LiBr
-#  - LiI
-#  - RbCl
-#  - RbBr
-#  - RbI
-#  - CsCl
-#  - CsBr
-#  - CsI
+  # Other alkali metals with halogens
+  - NaBr
+  - NaI
+  - KF
+  - KI
+  - LiCl
+  - LiBr
+  - LiI
+  - RbCl
+  - RbBr
+  - RbI
+  - CsCl
+  - CsBr
+  - CsI
 
 #  # Double halides (can be used to test model stability)
 #  - K3AlF6

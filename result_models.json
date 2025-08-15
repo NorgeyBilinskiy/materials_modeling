@@ -1,71 +1,97 @@
 {
   "metadata": {
-    "timestamp": "2025-08-15T16:17:42.525328",
-    "log_file": "logs\\materials_modeling_20250815_161303.log",
-    "description": "Materials modeling results - predictions and training histories"
+    "timestamp": "2025-08-15T19:47:42.728398",
+    "log_file": "logs\\materials_modeling_20250815_194251.log",
+    "description": "Materials modeling results - predictions, training histories, and final metrics"
   },
   "predictions": {
     "cgcnn": {
       "nacl": {
-        "value": -1.9793756008148193,
+        "value": -1.9793686866760254,
         "unit": "eV/atom",
         "formatted": "-1.9794 eV/atom"
       }
     },
     "megnet": {
       "nacl": {
-        "value": -1.6272857189178467,
+        "value": -1.3494174480438232,
         "unit": "eV/atom",
-        "formatted": "-1.6273 eV/atom"
+        "formatted": "-1.3494 eV/atom"
       }
     },
     "schnet": {
       "nacl": {
-        "value": -1.2619976997375488,
+        "value": -1.5611851215362549,
         "unit": "eV/atom",
-        "formatted": "-1.2620 eV/atom"
+        "formatted": "-1.5612 eV/atom"
       }
     },
     "mpnn": {
       "nacl": {
-        "value": -1.9956200122833252,
+        "value": -0.7245819568634033,
         "unit": "eV/atom",
-        "formatted": "-1.9956 eV/atom"
+        "formatted": "-0.7246 eV/atom"
       }
     }
   },
   "training_histories": {
     "cgcnn": {
       "status": "success",
-      "best_val_loss": 6.501922200641275e-08,
-      "best_epoch": 21,
-      "final_train_loss": 0.016253901179879904,
-      "final_val_loss": 0.0025966851972043514,
+      "best_val_loss": 6.859308143702947e-08,
+      "best_epoch": 19,
+      "final_train_loss": 0.004413131158798933,
+      "final_val_loss": 0.0016818218864500523,
       "total_epochs": 300
     },
     "megnet": {
       "status": "success",
-      "best_val_loss": 7.737759233350516e-07,
-      "best_epoch": "N/A",
-      "final_train_loss": 0.05103931576013565,
-      "final_val_loss": 0.02646556869149208,
-      "total_epochs": 300
+      "best_val_loss": 2.0932935740347602e-07,
+      "best_epoch": 24,
+      "final_train_loss": 0.8391789793968201,
+      "final_val_loss": 0.010372870601713657,
+      "total_epochs": 45
     },
     "schnet": {
       "status": "success",
-      "best_val_loss": 5.474293175211642e-06,
-      "best_epoch": "N/A",
-      "final_train_loss": 0.09761988371610641,
-      "final_val_loss": 0.08647190779447556,
-      "total_epochs": 300
+      "best_val_loss": 1.1171571713930462e-05,
+      "best_epoch": 24,
+      "final_train_loss": 0.40344712138175964,
+      "final_val_loss": 0.0735810324549675,
+      "total_epochs": 45
     },
     "mpnn": {
       "status": "success",
-      "best_val_loss": 8.67472749632725e-07,
-      "best_epoch": "N/A",
-      "final_train_loss": 0.16994944214820862,
-      "final_val_loss": 0.000542870198842138,
-      "total_epochs": 300
+      "best_val_loss": 6.749912427039817e-05,
+      "best_epoch": 22,
+      "final_train_loss": 0.123661108314991,
+      "final_val_loss": 0.00889186654239893,
+      "total_epochs": 43
+    }
+  },
+  "final_metrics": {
+    "cgcnn": {
+      "rmse": 0.18593011384944239,
+      "mae": 0.10387056715348188,
+      "r2": 0.9127727638499412,
+      "mse": 0.03457000723606661
+    },
+    "megnet": {
+      "rmse": 0.43631199211572397,
+      "mae": 0.33463771904216094,
+      "r2": 0.5196620049429059,
+      "mse": 0.19036815446399155
+    },
+    "schnet": {
+      "rmse": 0.4742775495172922,
+      "mae": 0.42981378471150117,
+      "r2": 0.43243216414807917,
+      "mse": 0.22493919397612755
+    },
+    "mpnn": {
+      "rmse": 0.4476656505200987,
+      "mae": 0.35104233377120075,
+      "r2": 0.49433815415266413,
+      "mse": 0.20040453465558314
     }
   }
 }

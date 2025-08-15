@@ -42,3 +42,8 @@ settings/materialsproject_api/token.env
 !/models/mpnn/.gitkeep
 /models/schnet/*
 !/models/schnet/.gitkeep
+
+# Logs
+/logs/*
+!/logs/.gitkeep
+!/logs/.materials_modeling_20250815_161303.log

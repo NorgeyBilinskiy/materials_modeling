@@ -22,3 +22,4 @@ services:
           memory: 4G
         reservations:
           memory: 2G
+    tty: true
