@@ -62,4 +62,4 @@ hparams.json
 # Logs
 /logs/*
 !/logs/.gitkeep
-!/logs/.materials_modeling_20250815_231541.log
+!/logs/.logs_for_example.log
