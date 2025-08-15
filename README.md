@@ -122,7 +122,7 @@ The project uses a comprehensive YAML-based configuration system located in the 
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/NorgeyBilinskiy/materials_modeling.git
 cd materials_modeling
 
 # Build and run with Docker Compose
