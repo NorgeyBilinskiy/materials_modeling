@@ -3,7 +3,7 @@ import sys
 from loguru import logger
 
 from src import MaterialsDataManager
-from src.data_preprocessing import prepare_datasets_from_cif
+from src import prepare_datasets_from_cif
 from src.train_validate_models import train_and_validate_all_models
 from src.predict_models import run_predictions_for_selected_materials
 

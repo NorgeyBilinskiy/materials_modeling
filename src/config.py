@@ -27,6 +27,10 @@ class Config:
             / "settings"
             / "materials"
             / "predict_material.yaml",
+            "data_preprocessing": self.BASE_DIR
+            / "settings"
+            / "preprocessing_data_training"
+            / "data_preprocessing.yaml",
         }
 
         # === Path Validation ===
@@ -148,13 +152,86 @@ class Config:
                 )
                 return []
 
+            if materials and isinstance(materials[0], dict):
+                material_formulas = [m.get('formula', '') for m in materials if m.get('formula')]
+            else:
+                material_formulas = materials
+
             logger.debug(
-                f"Loaded {len(materials)} materials for prediction: {materials}"
+                f"Loaded {len(material_formulas)} materials for prediction: {material_formulas}"
             )
-            return materials
+            return material_formulas
 
         except Exception as e:
             logger.error(
                 f"Failed to load prediction materials list from YAML file: {e}"
+            )
+            raise
+
+    def get_predict_materials_config(self) -> List[Dict]:
+        """Get the detailed configuration for prediction materials including structure preferences.
+
+        Returns:
+            List[Dict]: List of material configurations with structure preferences
+
+        Raises:
+            Exception: If there's an error reading or parsing the YAML file
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["predict_substances"])
+            )
+            materials = yaml_data.get("predict_substances", [])
+
+            if not materials:
+                logger.warning(
+                    "No materials for prediction found in the YAML configuration file"
+                )
+                return []
+
+            if materials and isinstance(materials[0], dict):
+                logger.debug(
+                    f"Loaded {len(materials)} materials with structure preferences for prediction"
+                )
+                return materials
+            else:
+                converted_materials = []
+                for formula in materials:
+                    converted_materials.append({
+                        'formula': formula,
+                        'preferred_structures': [],
+                        'fallback': 'any'
+                    })
+                logger.debug(
+                    f"Converted {len(converted_materials)} materials to new format for backward compatibility"
+                )
+                return converted_materials
+
+        except Exception as e:
+            logger.error(
+                f"Failed to load prediction materials configuration from YAML file: {e}"
+            )
+            raise
+
+    def get_preprocessing_config(self) -> Dict[str, Any]:
+        """Get the data preprocessing configuration from YAML file.
+
+        Returns:
+            Dict[str, Any]: Configuration dictionary for data preprocessing
+
+        Raises:
+            Exception: If there's an error reading or parsing the YAML file
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["data_preprocessing"])
+            )
+            
+            logger.debug("Data preprocessing configuration loaded successfully")
+            return yaml_data
+
+        except Exception as e:
+            logger.error(
+                f"Failed to load data preprocessing configuration from YAML file: {e}"
             )
             raise
