@@ -1,0 +1,35 @@
+# Model training settings
+
+# Number of epochs for final training of best models after HPO
+training_epochs:
+  final_training: 300  # Epochs for final training of best model
+  hpo_trials: 25       # Epochs for HPO trials (set in hpo.py)
+
+# Settings for each model
+models:
+  cgcnn:
+    enabled: true
+    description: "Crystal Graph Convolutional Neural Network"
+    
+  megnet:
+    enabled: true
+    description: "MatErials Graph Network"
+    
+  schnet:
+    enabled: true
+    description: "SchNet-like model using GCN layers"
+    
+  mpnn:
+    enabled: true
+    description: "Message Passing Neural Network"
+
+# Additional settings
+advanced:
+  # Use pretrained weights if available
+  use_pretrained: false
+  
+  # Automatically save checkpoints every N epochs
+  checkpoint_frequency: 50
+  
+  # Maximum training time in hours (0 = no limit)
+  max_training_time_hours: 0

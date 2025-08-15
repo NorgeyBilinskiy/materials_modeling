@@ -4,10 +4,11 @@ Prediction module for MEGNet model.
 
 import os
 import logging
+
 import torch
 from pymatgen.core import Structure
 
-from src.data_preprocessing import create_graph_features
+from src import create_graph_features
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,17 @@ def predict_megnet(
     # Create model and load weights
     from .model import create_megnet_model
 
-    model = create_megnet_model()
-    model.to(device)
+    # Create model with hyperparameters from checkpoint if present
+    from .model import create_megnet_model
 
     checkpoint = torch.load(model_path, map_location=device)
+    hparams = checkpoint.get("hparams", {})
+    model = create_megnet_model(
+        hidden_channels=hparams.get("hidden_channels", 64),
+        num_layers=hparams.get("num_layers", 3),
+        dropout=hparams.get("dropout", 0.2),
+    )
+    model.to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 

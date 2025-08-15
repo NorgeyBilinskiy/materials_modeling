@@ -4,11 +4,13 @@ Training module for MPNN model.
 
 import os
 import logging
+
 import torch
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 from typing import Dict, Any
 
-from .model import create_mpnn_model
+from .model import MPNNLoss, create_mpnn_model
+from ...utils import set_random_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +22,32 @@ def train_mpnn(
     data_path: str = "data/",
     model_save_path: str = "models/mpnn/",
     device: str = None,
+    hidden_channels: int = 64,
+    num_layers: int = 3,
+    dropout: float = 0.2,
+    weight_decay: float = 1e-5,
+    random_seed: int = 42,
 ) -> Dict[str, Any]:
     """
     Train MPNN model for NaCl formation energy prediction.
+
+    Args:
+        epochs: Number of training epochs
+        batch_size: Batch size for training
+        lr: Learning rate
+        data_path: Path to data directory
+        model_save_path: Path to save trained model
+        device: Device to use for training
+        hidden_channels: Number of hidden channels
+        num_layers: Number of layers
+        dropout: Dropout rate
+        weight_decay: Weight decay for optimizer
+        random_seed: Random seed for reproducibility
     """
     logger.info("Starting MPNN training...")
+
+    # Set random seeds for reproducibility
+    set_random_seeds(random_seed)
 
     # Set device
     if device is None:
@@ -48,14 +71,14 @@ def train_mpnn(
     model = create_mpnn_model(
         num_node_features=1,
         num_edge_features=1,
-        hidden_channels=64,
-        num_layers=3,
-        dropout=0.2,
+        hidden_channels=hidden_channels,
+        num_layers=num_layers,
+        dropout=dropout,
     ).to(device)
 
     # Create loss function and optimizer
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+    criterion = MPNNLoss(loss_type="mse")
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     # Training history
     history = {"train_loss": [], "val_loss": [], "best_val_loss": float("inf")}
@@ -105,12 +128,22 @@ def train_mpnn(
         # Save best model
         if val_loss < history["best_val_loss"]:
             history["best_val_loss"] = val_loss
+            hparams = {
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "lr": lr,
+                "hidden_channels": hidden_channels,
+                "num_layers": num_layers,
+                "dropout": dropout,
+                "weight_decay": weight_decay,
+            }
             torch.save(
                 {
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
                     "val_loss": val_loss,
+                    "hparams": hparams,
                 },
                 os.path.join(model_save_path, "best_model.pth"),
             )

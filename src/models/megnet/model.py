@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GatedGraphConv, global_mean_pool
 from torch_geometric.data import Data
-from typing import Optional
 
 
 class MEGNet(nn.Module):

@@ -1,45 +1,53 @@
-# Настройки препроцессинга данных для обучения моделей
+# Data preprocessing settings for model training
 
-# Разделение данных на выборки (в процентах)
-data_splitting:
-  # Для обычных материалов (не в списке predict)
-  regular_materials:
-    train_ratio: 0.8    # 80% в train
-    test_ratio: 0.2     # 20% в test
+# Reproducibility settings
+reproducibility:
+  # Random seed for reproducibility
+  random_seed: 42
   
-  # Для зарезервированных материалов (в списке predict)
-  # Структуры указываются явно в predict_material.yaml
-  # Автоматическое разделение отключено
+  # Apply seed to all components
+  apply_seed: true
 
-# Масштабирование целевых переменных
+# Data splitting into datasets (in percentages)
+data_splitting:
+  # For regular materials (not in predict list)
+  regular_materials:
+    train_ratio: 0.8    # 80% to training set
+    test_ratio: 0.2     # 20% to test set
+  
+  # For reserved materials (in predict list)
+  # Structures are specified explicitly in predict_material.yaml
+  # Automatic splitting is disabled
+
+# Target variable scaling
 target_scaling:
-  # Масштабировать ли энергию формирования
+  # Scale formation energy
   scale_formation_energy: false
   
-  # Метод масштабирования
-  # Возможные значения: "standard", "minmax", "robust"
+  # Scaling method
+  # Possible values: "standard", "minmax", "robust"
   scaling_method: "standard"
   
-  # Параметры для minmax масштабирования (если выбран)
+  # Parameters for minmax scaling (if selected)
   minmax:
     feature_range: [0, 1]
   
-  # Параметры для robust масштабирования (если выбран)
+  # Parameters for robust scaling (if selected)
   robust:
     quantile_range: [25.0, 75.0]
 
-# Настройки создания графов
+# Graph creation settings
 graph_features:
-  # Радиус поиска соседей (в ангстремах)
+  # Neighbor search radius (in Angstroms)
   neighbor_cutoff: 5.0
   
-  # Минимальное количество рёбер для создания графа
+  # Minimum number of edges for graph creation
   min_edges: 1
 
-# Логирование
+# Logging
 logging:
-  # Уровень детализации логов
+  # Log detail level
   level: "INFO"
   
-  # Показывать ли прогресс обработки
+  # Show processing progress
   show_progress: true

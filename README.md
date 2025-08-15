@@ -1,131 +1,314 @@
-# NaCl Formation Energy Prediction with Graph Neural Networks
+# Materials Modeling with Graph Neural Networks
 
-## Цель проекта
+## Project Overview
 
-Данный проект демонстрирует применение различных графовых нейронных сетей для предсказания энергии формирования кристаллической структуры NaCl (поваренная соль). Проект сравнивает эффективность четырех современных подходов: CGCNN, MEGNet, SchNet и MPNN.
+This project demonstrates the application of various Graph Neural Network (GNN) architectures for predicting material properties, specifically formation energy of crystalline structures. The project compares the effectiveness of four state-of-the-art approaches: **CGCNN**, **MEGNet**, **SchNet**, and **MPNN**.
 
-## Теоретическое обоснование
+## Project Goals and Objectives
 
-### Энергия формирования NaCl
-Энергия формирования NaCl составляет примерно **-3.6 эВ/атом** и является важной термодинамической характеристикой, определяющей стабильность кристаллической структуры.
+### Primary Goals
+- **Predict formation energy** of crystalline materials using deep learning
+- **Compare different GNN architectures** for materials science applications
+- **Implement hyperparameter optimization** using Bayesian optimization
+- **Provide reproducible results** with configurable random seeds
+- **Create a containerized solution** for easy deployment and sharing
 
-### Используемые модели
+### Scientific Objectives
+- Achieve accurate predictions of formation energy (target: NaCl ~-3.6 eV/atom)
+- Demonstrate the effectiveness of graph-based approaches for crystal structures
+- Provide insights into which GNN architecture works best for specific material types
 
-1. **CGCNN (Crystal Graph Convolutional Neural Network)**
-   - Специально разработан для кристаллических структур
-   - Использует графовые свертки для обработки связей между атомами
-   - Учитывает периодические граничные условия
+## Theoretical Background
 
-2. **MEGNet (MatErials Graph Network)**
-   - Универсальная архитектура для материалов
-   - Сочетает графовые нейронные сети с глобальными состояниями
-   - Эффективна для предсказания различных свойств материалов
+### Formation Energy
+Formation energy is a key thermodynamic property that determines the stability of crystalline structures. For NaCl (table salt), the reference value is approximately **-3.6 eV/atom**.
 
-3. **SchNet (Schrödinger Network)**
-   - Основана на квантово-механических принципах
-   - Использует фильтры для моделирования взаимодействий
-   - Хорошо работает с молекулярными и кристаллическими системами
+### Why Graph Neural Networks?
+Crystal structures can be naturally represented as graphs where:
+- **Nodes** represent atoms
+- **Edges** represent chemical bonds and interactions
+- **Graph topology** captures the 3D spatial relationships
 
-4. **MPNN (Message Passing Neural Network)**
-   - Общий фреймворк для графовых нейронных сетей
-   - Передает сообщения между узлами графа
-   - Гибкая архитектура для различных типов графов
+## Models in the Project
 
-## Структура проекта
+### 1. **CGCNN (Crystal Graph Convolutional Neural Network)**
+- **Purpose**: Specifically designed for crystalline structures
+- **Architecture**: Uses graph convolutions to process atomic connections
+- **Features**: Handles periodic boundary conditions, crystal symmetry
+- **Best for**: Inorganic crystals, materials with well-defined unit cells
+
+### 2. **MEGNet (MatErials Graph Network)**
+- **Purpose**: Universal architecture for materials science
+- **Architecture**: Combines graph neural networks with global states
+- **Features**: Global feature aggregation, multi-task learning capability
+- **Best for**: Diverse material properties, transfer learning
+
+### 3. **SchNet (Schrödinger Network)**
+- **Purpose**: Physics-informed neural network based on quantum mechanics
+- **Architecture**: Uses continuous filters for modeling interactions
+- **Features**: Continuous convolution, physical interpretability
+- **Best for**: Molecular systems, quantum chemistry applications
+
+### 4. **MPNN (Message Passing Neural Network)**
+- **Purpose**: General framework for graph neural networks
+- **Architecture**: Message passing between graph nodes
+- **Features**: Flexible architecture, adaptable to various graph types
+- **Best for**: General graph learning, baseline comparisons
+
+## Project Structure
 
 ```
-project_root/
-├── Dockerfile                 # Контейнеризация проекта
-├── docker-compose.yml         # Оркестрация сервисов
-├── run.py                     # Главный CLI-скрипт
-├── requirements.txt           # Зависимости Python
-├── data_loader/              # Загрузка и предобработка данных
-├── models/                   # Реализации моделей
-├── notebooks/                # Jupyter ноутбуки для анализа
-└── tests/                    # Unit-тесты
+materials_modeling/
+├── Dockerfile                          # Container definition
+├── docker-compose.yml                  # Service orchestration
+├── main.py                            # Main application entry point
+├── pyproject.toml                     # Project dependencies (uv)
+├── requirements.txt                    # Python package requirements
+├── settings/                          # Configuration files
+│   ├── materials/                     # Material selection and prediction
+│   │   ├── selection_materials.yaml   # Materials for training
+│   │   └── predict_material.yaml      # Materials for prediction
+│   ├── models/                        # Model configuration
+│   │   ├── hyperparameter_limits.yaml # HPO bounds and settings
+│   │   └── models.yaml                # Training epochs and model settings
+│   ├── preprocessing_data_training/    # Data preprocessing settings
+│   │   └── data_preprocessing.yaml    # Data splitting, scaling, graph features
+│   └── materialsproject_api/          # API configuration
+├── src/                               # Source code
+│   ├── config.py                      # Configuration management
+│   ├── data_preprocessing.py          # Data preprocessing and graph creation
+│   ├── get_data.py                    # Data download from Materials Project
+│   ├── models/                        # Model implementations
+│   │   ├── cgcnn/                    # CGCNN model
+│   │   ├── megnet/                    # MEGNet model
+│   │   ├── schnet/                    # SchNet model
+│   │   ├── mpnn/                      # MPNN model
+│   │   └── hpo.py                     # Hyperparameter optimization
+│   ├── train_validate_models.py       # Training orchestration
+│   ├── predict_models.py              # Prediction pipeline
+│   └── utils/                         # Utility functions
+├── models/                            # Trained model checkpoints
+├── temporary_data/                    # Downloaded and processed data
+├── logs/                              # Application logs
+└── result_models.json                 # Prediction results and training histories
 ```
 
-## Быстрый старт
+## Configuration Management
 
-### Через Docker (рекомендуется)
+The project uses a comprehensive YAML-based configuration system located in the `settings/` directory:
+
+### 📁 **`settings/materials/`**
+- **`selection_materials.yaml`**: Defines materials for training and validation
+- **`predict_material.yaml`**: Specifies materials and structures for prediction
+
+### 📁 **`settings/models/`**
+- **`hyperparameter_limits.yaml`**: Defines hyperparameter search bounds for Bayesian optimization
+- **`models.yaml`**: Configures training epochs and model-specific settings
+
+### 📁 **`settings/preprocessing_data_training/`**
+- **`data_preprocessing.yaml`**: Controls data splitting ratios, target scaling, graph features, and reproducibility
+
+### Key Configuration Features
+- **Data splitting ratios** (train/test splits)
+- **Hyperparameter optimization** settings (initial points, iterations)
+- **Training epochs** (HPO trials vs. final training)
+- **Random seeds** for reproducibility
+- **Graph creation parameters** (neighbor cutoff, minimum edges)
+- **Target scaling** options (standard, minmax, robust)
+
+## Quick Start
+
+### 🐳 **Docker Compose (Recommended)**
 
 ```bash
-# Клонирование репозитория
+# Clone the repository
 git clone <repository-url>
 cd materials_modeling
 
-# Запуск через Docker Compose
+# Build and run with Docker Compose
 docker-compose up --build
 
-# Или запуск конкретной модели
-python run.py --method cgcnn
+# Run in background
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
-### Локальная установка
+### 🐳 **Docker Commands**
 
 ```bash
-# Создание виртуального окружения
+# Build image
+docker build -t materials-modeling .
+
+# Run container
+docker run -it --rm \
+  -v $(pwd)/temporary_data:/app/temporary_data \
+  -v $(pwd)/models:/app/models \
+  -v $(pwd)/settings:/app/settings \
+  materials-modeling
+
+# Run with specific environment variables
+docker run -it --rm \
+  -e MATERIALS_PROJECT_TOKEN=your_token_here \
+  materials-modeling
+```
+
+### 💻 **Local Installation**
+
+```bash
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# или
+# or
 venv\Scripts\activate     # Windows
 
-# Установка зависимостей
+# Install dependencies with uv
+uv sync
+
+# Or with pip
 pip install -r requirements.txt
 
-# Запуск обучения
-python run.py --method cgcnn
+# Run the application
+python main.py
 ```
 
-## Использование
+## Usage
 
-### CLI-интерфейс
+### Basic Execution
 
 ```bash
-# Обучение модели
-python run.py --method cgcnn --train
+# Run complete pipeline (download, train, predict)
+python main.py
 
-# Предсказание
-python run.py --method cgcnn --predict
-
-# Сравнение всех моделей
-python run.py --compare
+# Check existing data before downloading
+python main.py  # Automatically detects existing CIF files
 ```
 
-### Доступные методы
-- `cgcnn` - Crystal Graph Convolutional Neural Network
-- `megnet` - MatErials Graph Network  
-- `schnet` - Schrödinger Network
-- `mpnn` - Message Passing Neural Network
+### Configuration Customization
 
-## Базы данных
+1. **Modify material lists** in `settings/materials/`
+2. **Adjust training parameters** in `settings/models/`
+3. **Change data preprocessing** in `settings/preprocessing_data_training/`
+4. **Set random seeds** for reproducibility
 
-Проект использует следующие источники данных:
-- **Materials Project** (https://materialsproject.org/) - основная база данных кристаллических структур
-- **OQMD** (Open Quantum Materials Database) - дополнительный источник данных
+### Expected Results
 
-## Результаты
+For NaCl prediction:
+- **Reference value**: ~-3.6 eV/atom
+- **CGCNN**: Expected close to reference
+- **MEGNet**: Stable predictions with good accuracy
+- **SchNet**: Physically justified results
+- **MPNN**: Baseline predictions for comparison
 
-Ожидаемые результаты для NaCl:
-- **Референсное значение**: ~-3.6 эВ/атом
-- **CGCNN**: Ожидается близкое к референсному значение
-- **MEGNet**: Стабильные предсказания с хорошей точностью
-- **SchNet**: Физически обоснованные результаты
-- **MPNN**: Базовые предсказания для сравнения
+## Features
 
-## Требования
+### 🔬 **Advanced Data Processing**
+- Automatic CIF file download from Materials Project
+- Crystal structure to graph conversion
+- Configurable data splitting strategies
+- Target variable scaling options
 
-- Python 3.10+
-- PyTorch 2.0+
-- PyTorch Geometric
-- DGL (Deep Graph Library)
-- Jupyter Notebook
-- Docker (опционально)
+### 🚀 **Hyperparameter Optimization**
+- Bayesian optimization with configurable bounds
+- Separate training regimes for HPO trials and final training
+- Automatic hyperparameter saving and loading
 
-## Лицензия
+### 📊 **Comprehensive Logging**
+- Console and file logging with rotation
+- Detailed training progress tracking
+- Error handling and debugging information
 
-MIT License
+### 🔄 **Reproducibility**
+- Configurable random seeds for all components
+- Deterministic operations in PyTorch
+- Saved model checkpoints with hyperparameters
 
-## Авторы
+## Requirements
 
-Проект создан для демонстрации применения графовых нейронных сетей в материаловедении.
+### System Requirements
+- **Python**: 3.11+
+- **Memory**: 8GB+ RAM recommended
+- **Storage**: 2GB+ for models and data
+
+### Python Dependencies
+- **PyTorch**: 2.0+
+- **PyTorch Geometric**: Latest version
+- **Materials Project API**: MPRester
+- **Scikit-learn**: For data preprocessing
+- **Bayesian Optimization**: For hyperparameter tuning
+
+### Docker Requirements
+- **Docker**: 20.10+
+- **Docker Compose**: 2.0+
+
+## Data Sources
+
+- **Materials Project** (https://materialsproject.org/): Primary source for crystal structures and properties
+- **CIF Files**: Standard format for crystallographic information
+- **Formation Energy**: Calculated using density functional theory (DFT)
+
+## Output Files
+
+### 📁 **`logs/`**
+- Timestamped log files with rotation
+- Debug and info level logging
+- Training progress and error tracking
+
+### 📁 **`models/`**
+- Trained model checkpoints
+- Best and final model states
+- Hyperparameter configurations
+
+### 📄 **`result_models.json`**
+- Structured prediction results
+- Training history summaries
+- Metadata and timestamps
+
+## Troubleshooting
+
+### Common Issues
+1. **Memory errors**: Reduce batch size in hyperparameter limits
+2. **Download failures**: Check Materials Project API token
+3. **Model loading errors**: Ensure hyperparameter consistency
+4. **Empty validation sets**: Check material structure assignments
+
+### Debug Mode
+Enable detailed logging by modifying `data_preprocessing.yaml`:
+```yaml
+logging:
+  level: "DEBUG"
+  show_progress: true
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Author
+
+**This project was created by a Data Analyst.**
+
+- **GitHub**: [NorgeyBilinskiy](https://github.com/NorgeyBilinskiy)
+- **Telegram**: [@Norgey](https://t.me/Norgey)
+
+## Acknowledgments
+
+- Materials Project team for providing the API and database
+- PyTorch Geometric community for graph neural network tools
+- Open source materials science community
+
+---
+
+*For questions and support, please reach out via GitHub or Telegram.*

@@ -32,3 +32,13 @@ settings/materialsproject_api/token.env
 !/temporary_data/processed/.gitkeep
 /temporary_data/processed/*
 !/temporary_data/processed/.gitkeep
+
+# Model weights
+/models/cgcnn/*
+!/models/cgcnn/.gitkeep
+/models/megnet/*
+!/models/megnet/.gitkeep
+/models/mpnn/*
+!/models/mpnn/.gitkeep
+/models/schnet/*
+!/models/schnet/.gitkeep

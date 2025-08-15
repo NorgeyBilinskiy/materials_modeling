@@ -5,15 +5,14 @@ Training module for CGCNN model.
 import os
 import json
 import logging
+
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
-import numpy as np
 from tqdm import tqdm
 from typing import Dict, Any
 
 from .model import CGCNN, CGCNNLoss, create_cgcnn_model
+from ...utils import set_random_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +24,12 @@ def train_cgcnn(
     data_path: str = "data/",
     model_save_path: str = "models/cgcnn/",
     device: str = None,
+    # tunable model/opt params
+    hidden_channels: int = 64,
+    num_layers: int = 3,
+    dropout: float = 0.2,
+    weight_decay: float = 1e-5,
+    random_seed: int = 42,
 ) -> Dict[str, Any]:
     """
     Train CGCNN model for NaCl formation energy prediction.
@@ -36,11 +41,19 @@ def train_cgcnn(
         data_path: Path to data directory
         model_save_path: Path to save trained model
         device: Device to use for training
+        hidden_channels: Number of hidden channels
+        num_layers: Number of layers
+        dropout: Dropout rate
+        weight_decay: Weight decay for optimizer
+        random_seed: Random seed for reproducibility
 
     Returns:
         Dictionary containing training history
     """
     logger.info("Starting CGCNN training...")
+
+    # Set random seeds for reproducibility
+    set_random_seeds(random_seed)
 
     # Set device
     if device is None:
@@ -66,14 +79,14 @@ def train_cgcnn(
     model = create_cgcnn_model(
         num_node_features=1,
         num_edge_features=1,
-        hidden_channels=64,
-        num_layers=3,
-        dropout=0.2,
+        hidden_channels=hidden_channels,
+        num_layers=num_layers,
+        dropout=dropout,
     ).to(device)
 
     # Create loss function and optimizer
     criterion = CGCNNLoss(loss_type="mse")
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.5, patience=10
     )
@@ -163,6 +176,15 @@ def train_cgcnn(
         if val_loss < history["best_val_loss"]:
             history["best_val_loss"] = val_loss
             history["best_epoch"] = epoch
+            hparams = {
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "lr": lr,
+                "hidden_channels": hidden_channels,
+                "num_layers": num_layers,
+                "dropout": dropout,
+                "weight_decay": weight_decay,
+            }
             torch.save(
                 {
                     "epoch": epoch,
@@ -170,6 +192,7 @@ def train_cgcnn(
                     "optimizer_state_dict": optimizer.state_dict(),
                     "val_loss": val_loss,
                     "history": history,
+                    "hparams": hparams,
                 },
                 os.path.join(model_save_path, "best_model.pth"),
             )
@@ -187,6 +210,15 @@ def train_cgcnn(
             )
 
     # Save final model
+    hparams = {
+        "epochs": epochs,
+        "batch_size": batch_size,
+        "lr": lr,
+        "hidden_channels": hidden_channels,
+        "num_layers": num_layers,
+        "dropout": dropout,
+        "weight_decay": weight_decay,
+    }
     torch.save(
         {
             "epoch": epochs,
@@ -194,6 +226,7 @@ def train_cgcnn(
             "optimizer_state_dict": optimizer.state_dict(),
             "val_loss": val_loss,
             "history": history,
+            "hparams": hparams,
         },
         os.path.join(model_save_path, "final_model.pth"),
     )
@@ -201,6 +234,12 @@ def train_cgcnn(
     # Save training history
     with open(os.path.join(model_save_path, "training_history.json"), "w") as f:
         json.dump(history, f, indent=2)
+    # Save hyperparameters
+    try:
+        with open(os.path.join(model_save_path, "hparams.json"), "w") as f:
+            json.dump(hparams, f, indent=2)
+    except Exception:
+        pass
 
     # Evaluate on test set
     test_loss, test_mae = evaluate_model(model, test_loader, criterion, device)
@@ -284,12 +323,21 @@ def load_trained_model(model_path: str, device: str = None) -> CGCNN:
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Create model
-    model = create_cgcnn_model()
+    # Load checkpoint to infer hyperparameters
+    checkpoint = torch.load(model_path, map_location=device)
+    hparams = checkpoint.get("hparams", {})
+
+    # Create model using saved hyperparameters if available
+    model = create_cgcnn_model(
+        num_node_features=1,
+        num_edge_features=1,
+        hidden_channels=hparams.get("hidden_channels", 64),
+        num_layers=hparams.get("num_layers", 3),
+        dropout=hparams.get("dropout", 0.2),
+    )
     model.to(device)
 
-    # Load checkpoint
-    checkpoint = torch.load(model_path, map_location=device)
+    # Load weights
     model.load_state_dict(checkpoint["model_state_dict"])
 
     logger.info(f"Loaded CGCNN model from {model_path}")

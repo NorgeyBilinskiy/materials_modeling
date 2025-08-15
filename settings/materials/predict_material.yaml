@@ -2,7 +2,7 @@ predict_substances:
   - formula: NaCl
     structures:
       validation:
-        - mp-1120767  # ТРИКЛИННАЯ структура NaCl
+        - mp-1120767  # TRICLINIC NaCl structure
       predict:
-        - mp-22851    # КУБИЧЕСКАЯ структура NaCl (rock-salt)
+        - mp-22851    # CUBIC NaCl structure (rock-salt)
     fallback: "any"

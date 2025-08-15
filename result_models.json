@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-15T16:17:42.525328",
+    "log_file": "logs\\materials_modeling_20250815_161303.log",
+    "description": "Materials modeling results - predictions and training histories"
+  },
+  "predictions": {
+    "cgcnn": {
+      "nacl": {
+        "value": -1.9793756008148193,
+        "unit": "eV/atom",
+        "formatted": "-1.9794 eV/atom"
+      }
+    },
+    "megnet": {
+      "nacl": {
+        "value": -1.6272857189178467,
+        "unit": "eV/atom",
+        "formatted": "-1.6273 eV/atom"
+      }
+    },
+    "schnet": {
+      "nacl": {
+        "value": -1.2619976997375488,
+        "unit": "eV/atom",
+        "formatted": "-1.2620 eV/atom"
+      }
+    },
+    "mpnn": {
+      "nacl": {
+        "value": -1.9956200122833252,
+        "unit": "eV/atom",
+        "formatted": "-1.9956 eV/atom"
+      }
+    }
+  },
+  "training_histories": {
+    "cgcnn": {
+      "status": "success",
+      "best_val_loss": 6.501922200641275e-08,
+      "best_epoch": 21,
+      "final_train_loss": 0.016253901179879904,
+      "final_val_loss": 0.0025966851972043514,
+      "total_epochs": 300
+    },
+    "megnet": {
+      "status": "success",
+      "best_val_loss": 7.737759233350516e-07,
+      "best_epoch": "N/A",
+      "final_train_loss": 0.05103931576013565,
+      "final_val_loss": 0.02646556869149208,
+      "total_epochs": 300
+    },
+    "schnet": {
+      "status": "success",
+      "best_val_loss": 5.474293175211642e-06,
+      "best_epoch": "N/A",
+      "final_train_loss": 0.09761988371610641,
+      "final_val_loss": 0.08647190779447556,
+      "total_epochs": 300
+    },
+    "mpnn": {
+      "status": "success",
+      "best_val_loss": 8.67472749632725e-07,
+      "best_epoch": "N/A",
+      "final_train_loss": 0.16994944214820862,
+      "final_val_loss": 0.000542870198842138,
+      "total_epochs": 300
+    }
+  }
+}

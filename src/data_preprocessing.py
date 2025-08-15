@@ -46,14 +46,14 @@ def create_graph_features(
         try:
             cfg = Config()
             preprocessing_config = cfg.get_preprocessing_config()
-            graph_config = preprocessing_config.get('graph_features', {})
-            cutoff = cutoff or graph_config.get('neighbor_cutoff', 5.0)
-            min_edges = min_edges or graph_config.get('min_edges', 1)
+            graph_config = preprocessing_config.get("graph_features", {})
+            cutoff = cutoff or graph_config.get("neighbor_cutoff", 5.0)
+            min_edges = min_edges or graph_config.get("min_edges", 1)
         except Exception as e:
             logger.warning(f"Failed to load config, using defaults: {e}")
             cutoff = cutoff or 5.0
             min_edges = min_edges or 1
-    
+
     # Node features: atomic numbers
     atomic_numbers = [site.specie.Z for site in structure.sites]
     x = torch.tensor(atomic_numbers, dtype=torch.long).unsqueeze(-1)
@@ -88,8 +88,10 @@ def create_graph_features(
                     # Euclidean distance
                     d = float(np.linalg.norm(pos[i].numpy() - pos[j].numpy()))
                     edge_dist.append(d)
-        
-        logger.debug(f"Created {len(edge_src)} edges for structure with {num_nodes} nodes (fallback to fully connected)")
+
+        logger.debug(
+            f"Created {len(edge_src)} edges for structure with {num_nodes} nodes (fallback to fully connected)"
+        )
 
     edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
     edge_attr = torch.tensor(edge_dist, dtype=torch.float32).unsqueeze(-1)
@@ -125,26 +127,34 @@ def _fetch_formation_energy(api_key: str, material_id: str) -> float:
 
                 value = getattr(entry, "formation_energy_per_atom", None)
                 if value is not None:
-                    logger.info(f"Found formation_energy_per_atom for {material_id}: {value} eV/atom")
+                    logger.info(
+                        f"Found formation_energy_per_atom for {material_id}: {value} eV/atom"
+                    )
                     return float(value)
-                
+
                 if isinstance(entry, dict):
                     value = entry.get("formation_energy_per_atom")
                     if value is not None:
-                        logger.info(f"Found formation_energy_per_atom (dict) for {material_id}: {value} eV/atom")
+                        logger.info(
+                            f"Found formation_energy_per_atom (dict) for {material_id}: {value} eV/atom"
+                        )
                         return float(value)
 
                 value = getattr(entry, "energy_per_atom", None)
                 if value is not None:
-                    logger.info(f"Using energy_per_atom (fallback) for {material_id}: {value} eV/atom")
+                    logger.info(
+                        f"Using energy_per_atom (fallback) for {material_id}: {value} eV/atom"
+                    )
                     return float(value)
-                
+
                 if isinstance(entry, dict):
                     value = entry.get("energy_per_atom")
                     if value is not None:
-                        logger.info(f"Using energy_per_atom (dict fallback) for {material_id}: {value} eV/atom")
+                        logger.info(
+                            f"Using energy_per_atom (dict fallback) for {material_id}: {value} eV/atom"
+                        )
                         return float(value)
-                
+
                 logger.warning(f"No energy values found for {material_id} in any field")
                 return float("nan")
             else:
@@ -164,45 +174,49 @@ def _material_formula_from_dirname(dirname: str) -> str:
 
 def _create_scaler(config: Dict[str, Any]) -> Any:
     """Create a scaler based on configuration.
-    
+
     Args:
         config: Configuration dictionary with scaling parameters
-        
+
     Returns:
         Fitted scaler object
     """
-    scaling_config = config.get('target_scaling', {})
-    method = scaling_config.get('scaling_method', 'standard')
-    
-    if method == 'standard':
+    scaling_config = config.get("target_scaling", {})
+    method = scaling_config.get("scaling_method", "standard")
+
+    if method == "standard":
         return StandardScaler()
-    elif method == 'minmax':
-        feature_range = scaling_config.get('minmax', {}).get('feature_range', [0, 1])
+    elif method == "minmax":
+        feature_range = scaling_config.get("minmax", {}).get("feature_range", [0, 1])
         return MinMaxScaler(feature_range=tuple(feature_range))
-    elif method == 'robust':
-        quantile_range = scaling_config.get('robust', {}).get('quantile_range', [25.0, 75.0])
+    elif method == "robust":
+        quantile_range = scaling_config.get("robust", {}).get(
+            "quantile_range", [25.0, 75.0]
+        )
         return RobustScaler(quantile_range=tuple(quantile_range))
     else:
         logger.warning(f"Unknown scaling method: {method}, using StandardScaler")
         return StandardScaler()
 
 
-def _apply_scaling(data_samples: List[Any], scaler: Any, config: Dict[str, Any]) -> List[Any]:
+def _apply_scaling(
+    data_samples: List[Any], scaler: Any, config: Dict[str, Any]
+) -> List[Any]:
     """Apply scaling to target values in data samples.
-    
+
     Args:
         data_samples: List of PyG Data objects
         scaler: Fitted scaler object
         config: Configuration dictionary
-        
+
     Returns:
         List of scaled PyG Data objects
     """
     if not data_samples:
         return data_samples
-    
-    scaling_config = config.get('target_scaling', {})
-    if not scaling_config.get('scale_formation_energy', True):
+
+    scaling_config = config.get("target_scaling", {})
+    if not scaling_config.get("scale_formation_energy", True):
         logger.info("Target scaling disabled, returning original data")
         return data_samples
 
@@ -212,10 +226,14 @@ def _apply_scaling(data_samples: List[Any], scaler: Any, config: Dict[str, Any])
 
     for i, sample in enumerate(data_samples):
         sample.y = torch.tensor(targets_scaled[i], dtype=torch.float32)
-    
-    logger.info(f"Applied {scaler.__class__.__name__} scaling to {len(data_samples)} samples")
-    logger.info(f"Target range: {targets_scaled.min():.4f} to {targets_scaled.max():.4f}")
-    
+
+    logger.info(
+        f"Applied {scaler.__class__.__name__} scaling to {len(data_samples)} samples"
+    )
+    logger.info(
+        f"Target range: {targets_scaled.min():.4f} to {targets_scaled.max():.4f}"
+    )
+
     return data_samples
 
 
@@ -249,13 +267,19 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
     preprocessing_config = cfg.get_preprocessing_config()
     api_key = cfg.get_material_project_info()
 
-    regular_config = preprocessing_config.get('data_splitting', {}).get('regular_materials', {})
-    
-    train_ratio = regular_config.get('train_ratio', 0.8)
-    test_ratio = regular_config.get('test_ratio', 0.2)
-    
-    logger.info(f"Data splitting ratios - Regular: train={train_ratio:.1%}, test={test_ratio:.1%}")
-    logger.info("Reserved materials: structures assigned explicitly in predict_material.yaml")
+    regular_config = preprocessing_config.get("data_splitting", {}).get(
+        "regular_materials", {}
+    )
+
+    train_ratio = regular_config.get("train_ratio", 0.8)
+    test_ratio = regular_config.get("test_ratio", 0.2)
+
+    logger.info(
+        f"Data splitting ratios - Regular: train={train_ratio:.1%}, test={test_ratio:.1%}"
+    )
+    logger.info(
+        "Reserved materials: structures assigned explicitly in predict_material.yaml"
+    )
 
     train_samples: List[Data] = []
     val_samples: List[Data] = []
@@ -264,21 +288,21 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
     for material_dir in sorted([p for p in cif_root.iterdir() if p.is_dir()]):
         material_formula_lc = material_dir.name.lower()
-        
+
         # Check if this material is in predict list
         predict_material_config = None
         for config in predict_config:
-            if config['formula'].lower() == material_formula_lc:
+            if config["formula"].lower() == material_formula_lc:
                 predict_material_config = config
                 break
-        
+
         is_reserved = predict_material_config is not None
-        
+
         # For NaCl: only preferred structures go to predict, others go to train/val/test
-        if material_formula_lc == 'nacl' and predict_material_config:
+        if material_formula_lc == "nacl" and predict_material_config:
             # This is NaCl with preferred structures
             pass  # Will be handled in the filtering logic below
-        elif material_formula_lc == 'nacl':
+        elif material_formula_lc == "nacl":
             # This is NaCl but not in predict list - treat as regular material
             is_reserved = False
 
@@ -288,28 +312,35 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
         material_samples: List[Data] = []
 
-        if is_reserved and predict_material_config.get('structures'):
-            structures_config = predict_material_config['structures']
-            validation_ids = [str(s).lower() for s in structures_config.get('validation', [])]
-            predict_ids = [str(s).lower() for s in structures_config.get('predict', [])]
+        if is_reserved and predict_material_config.get("structures"):
+            structures_config = predict_material_config["structures"]
+            validation_ids = [
+                str(s).lower() for s in structures_config.get("validation", [])
+            ]
+            predict_ids = [str(s).lower() for s in structures_config.get("predict", [])]
 
             for cif_fp in cif_files:
                 material_id = cif_fp.stem.lower()
-                
+
                 try:
                     structure = _read_cif(cif_fp)
                     x, edge_index, edge_attr, pos = create_graph_features(structure)
-                    
+
                     y_value = float("nan")
                     if api_key:
                         y_value = _fetch_formation_energy(api_key, cif_fp.stem)
-                    
+
                     if math.isnan(y_value):
-                        logger.warning(f"Target (formation energy) missing for {cif_fp.stem}; skipping sample")
+                        logger.warning(
+                            f"Target (formation energy) missing for {cif_fp.stem}; skipping sample"
+                        )
                         continue
-                    
+
                     data_obj = Data(
-                        x=x, edge_index=edge_index, edge_attr=edge_attr, pos=pos,
+                        x=x,
+                        edge_index=edge_index,
+                        edge_attr=edge_attr,
+                        pos=pos,
                         y=torch.tensor(y_value, dtype=torch.float32),
                     )
                     data_obj.material = material_formula_lc
@@ -317,29 +348,48 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
                     if material_id in validation_ids:
                         val_samples.append(data_obj)
-                        logger.info(f"Explicitly assigned {cif_fp.stem} to VALIDATION set")
+                        logger.info(
+                            f"Explicitly assigned {cif_fp.stem} to VALIDATION set"
+                        )
                     elif material_id in predict_ids:
                         predict_samples.append(data_obj)
                         logger.info(f"Explicitly assigned {cif_fp.stem} to PREDICT set")
                     else:
-                        current_train_count = len([s for s in train_samples if s.material == material_formula_lc])
-                        if current_train_count < len([f for f in cif_files if f.stem.lower() not in validation_ids + predict_ids]) * train_ratio:
+                        current_train_count = len(
+                            [
+                                s
+                                for s in train_samples
+                                if s.material == material_formula_lc
+                            ]
+                        )
+                        if (
+                            current_train_count
+                            < len(
+                                [
+                                    f
+                                    for f in cif_files
+                                    if f.stem.lower()
+                                    not in validation_ids + predict_ids
+                                ]
+                            )
+                            * train_ratio
+                        ):
                             train_samples.append(data_obj)
                             logger.info(f"Added unassigned {cif_fp.stem} to train set")
                         else:
                             test_samples.append(data_obj)
                             logger.info(f"Added unassigned {cif_fp.stem} to test set")
-                            
+
                 except Exception as e:
                     logger.warning(f"Failed to process {cif_fp}: {e}")
                     continue
-            
+
             # Skip the main processing loop for reserved materials
             continue
         else:
             # For non-reserved materials, process normally
             filtered_cif_files = cif_files
-        
+
         for cif_fp in filtered_cif_files:
             try:
                 structure = _read_cif(cif_fp)
@@ -375,7 +425,9 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
             continue
 
         if is_reserved:
-            logger.info(f"Reserved material {material_formula_lc}: structures assigned explicitly")
+            logger.info(
+                f"Reserved material {material_formula_lc}: structures assigned explicitly"
+            )
         else:
             split_idx = max(1, int(train_ratio * len(material_samples)))
             train_samples.extend(material_samples[:split_idx])
@@ -383,9 +435,13 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
             train_ids = [s.material_id for s in material_samples[:split_idx]]
             test_ids = [s.material_id for s in material_samples[split_idx:]]
-            logger.info(f"Regular material {material_formula_lc}: {len(train_ids)} to train ({train_ids}), {len(test_ids)} to test ({test_ids})")
+            logger.info(
+                f"Regular material {material_formula_lc}: {len(train_ids)} to train ({train_ids}), {len(test_ids)} to test ({test_ids})"
+            )
 
-    if preprocessing_config.get('target_scaling', {}).get('scale_formation_energy', True):
+    if preprocessing_config.get("target_scaling", {}).get(
+        "scale_formation_energy", True
+    ):
         logger.info("Applying target scaling to all datasets...")
 
         scaler = _create_scaler(preprocessing_config)
@@ -396,7 +452,8 @@ def prepare_datasets_from_cif() -> Dict[str, Path]:
 
         scaler_path = processed_dir / "target_scaler.pkl"
         import pickle
-        with open(scaler_path, 'wb') as f:
+
+        with open(scaler_path, "wb") as f:
             pickle.dump(scaler, f)
         logger.info(f"Saved target scaler to {scaler_path}")
     else:

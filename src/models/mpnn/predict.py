@@ -4,10 +4,11 @@ Prediction module for MPNN model.
 
 import os
 import logging
+
 import torch
 from pymatgen.core import Structure
 
-from src.data_preprocessing import create_graph_features
+from src import create_graph_features
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,14 @@ def predict_mpnn(
     # Create model and load weights
     from .model import create_mpnn_model
 
-    model = create_mpnn_model()
-    model.to(device)
-
     checkpoint = torch.load(model_path, map_location=device)
+    hparams = checkpoint.get("hparams", {})
+    model = create_mpnn_model(
+        hidden_channels=hparams.get("hidden_channels", 64),
+        num_layers=hparams.get("num_layers", 3),
+        dropout=hparams.get("dropout", 0.2),
+    )
+    model.to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
@@ -54,14 +59,12 @@ def predict_mpnn(
     )
 
     # Convert structure to graph
-    node_features, edge_index, edge_attr = create_graph_features(nacl_structure)
+    x, edge_index, edge_attr, _ = create_graph_features(nacl_structure)
 
     # Create PyTorch Geometric Data object
     from torch_geometric.data import Data
 
-    graph_data = Data(
-        x=node_features.unsqueeze(-1), edge_index=edge_index, edge_attr=edge_attr
-    )
+    graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
     # Make prediction
     with torch.no_grad():

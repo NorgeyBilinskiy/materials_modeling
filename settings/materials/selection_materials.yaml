@@ -4,7 +4,7 @@ formulas_substances:
   - KBr
   - LiF
 
-#  # Другие щелочные металлы с галогенами
+#  # Other alkali metals with halogens
 #  - NaBr
 #  - NaI
 #  - KF
@@ -18,8 +18,8 @@ formulas_substances:
 #  - CsCl
 #  - CsBr
 #  - CsI
-#
-#  # Двойные галогениды (можно для проверки устойчивости модели)
+
+#  # Double halides (can be used to test model stability)
 #  - K3AlF6
 #  - Na3AlF6
 #  - Na2MgCl4

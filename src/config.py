@@ -31,6 +31,11 @@ class Config:
             / "settings"
             / "preprocessing_data_training"
             / "data_preprocessing.yaml",
+            "model_hparam_limits": self.BASE_DIR
+            / "settings"
+            / "models"
+            / "hyperparameter_limits.yaml",
+            "models": self.BASE_DIR / "settings" / "models" / "models.yaml",
         }
 
         # === Path Validation ===
@@ -51,7 +56,7 @@ class Config:
         for name, path in self.PATH_TO_VALIDATE.items():
             try:
                 FileValidator.validate_file_path(str(path))
-                logger.debug(f"Configuration file '{name}' validated: {path}")
+                # Removed debug logging for each file to reduce noise
             except Exception as e:
                 logger.error(f"Failed to validate configuration file '{name}': {e}")
                 raise
@@ -62,7 +67,7 @@ class Config:
             DirectoryValidator.create_directory_if_not_exists(
                 str(self.temporary_data_dir)
             )
-            logger.debug(f"Temporary data directory ensured: {self.temporary_data_dir}")
+            # Removed debug logging to reduce noise
         except Exception as e:
             logger.error(f"Failed to create temporary data directory: {e}")
             raise
@@ -71,7 +76,7 @@ class Config:
         """Load environment variables from configuration files."""
         try:
             load_dotenv(self.PATH_TO_VALIDATE["materialsproject_token"])
-            logger.debug("Environment variables loaded from token file")
+            # Removed debug logging to reduce noise
         except Exception as e:
             logger.warning(f"Failed to load environment variables: {e}")
 
@@ -85,7 +90,8 @@ class Config:
             )
             self.API_TOKEN_MATERIALS_PROJECT = None
         else:
-            logger.debug("Materials Project API key loaded successfully")
+            # Removed debug logging to reduce noise
+            pass
 
     def get_material_project_info(self) -> Optional[str]:
         """Get the Materials Project API token.
@@ -122,9 +128,7 @@ class Config:
                 logger.warning("No materials found in the YAML configuration file")
                 return []
 
-            logger.debug(
-                f"Loaded {len(materials)} materials from configuration: {materials}"
-            )
+            # Removed debug logging to reduce noise
             return materials
 
         except Exception as e:
@@ -153,13 +157,13 @@ class Config:
                 return []
 
             if materials and isinstance(materials[0], dict):
-                material_formulas = [m.get('formula', '') for m in materials if m.get('formula')]
+                material_formulas = [
+                    m.get("formula", "") for m in materials if m.get("formula")
+                ]
             else:
                 material_formulas = materials
 
-            logger.debug(
-                f"Loaded {len(material_formulas)} materials for prediction: {material_formulas}"
-            )
+            # Removed debug logging to reduce noise
             return material_formulas
 
         except Exception as e:
@@ -190,21 +194,19 @@ class Config:
                 return []
 
             if materials and isinstance(materials[0], dict):
-                logger.debug(
-                    f"Loaded {len(materials)} materials with structure preferences for prediction"
-                )
+                # Removed debug logging to reduce noise
                 return materials
             else:
                 converted_materials = []
                 for formula in materials:
-                    converted_materials.append({
-                        'formula': formula,
-                        'preferred_structures': [],
-                        'fallback': 'any'
-                    })
-                logger.debug(
-                    f"Converted {len(converted_materials)} materials to new format for backward compatibility"
-                )
+                    converted_materials.append(
+                        {
+                            "formula": formula,
+                            "preferred_structures": [],
+                            "fallback": "any",
+                        }
+                    )
+                # Removed debug logging to reduce noise
                 return converted_materials
 
         except Exception as e:
@@ -226,12 +228,70 @@ class Config:
             yaml_data = FileHandler.load_yaml(
                 str(self.PATH_TO_VALIDATE["data_preprocessing"])
             )
-            
-            logger.debug("Data preprocessing configuration loaded successfully")
+            # Removed debug logging to reduce noise
             return yaml_data
-
         except Exception as e:
             logger.error(
                 f"Failed to load data preprocessing configuration from YAML file: {e}"
             )
+            raise
+
+    def get_reproducibility_config(self) -> Dict[str, Any]:
+        """Get the reproducibility configuration from YAML file.
+
+        Returns:
+            Dict[str, Any]: Configuration dictionary for reproducibility settings
+
+        Raises:
+            Exception: If there's an error reading or parsing the YAML file
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["data_preprocessing"])
+            )
+            reproducibility_config = yaml_data.get("reproducibility", {})
+            # Removed debug logging to reduce noise
+            return reproducibility_config
+        except Exception as e:
+            logger.error(
+                f"Failed to load reproducibility configuration from YAML file: {e}"
+            )
+            raise
+
+    def get_model_hparam_limits(self) -> Dict[str, Any]:
+        """Load Bayesian optimization and hyperparameter bounds for models.
+
+        Returns:
+            Dict[str, Any]: Configuration containing bayes opt settings and bounds
+
+        Raises:
+            Exception: If loading/parsing fails
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(
+                str(self.PATH_TO_VALIDATE["model_hparam_limits"])
+            )
+            # Removed debug logging to reduce noise
+            return yaml_data
+        except Exception as e:
+            logger.error(
+                f"Failed to load model hyperparameter limits from YAML file: {e}"
+            )
+            raise
+
+    def get_models_config(self) -> Dict[str, Any]:
+        """Get the models configuration from YAML file.
+
+        Returns:
+            Dict[str, Any]: Configuration dictionary for models settings
+
+        Raises:
+            Exception: If there's an error reading or parsing the YAML file
+        """
+        try:
+            yaml_data = FileHandler.load_yaml(str(self.PATH_TO_VALIDATE["models"]))
+            # Removed debug logging to reduce noise
+            return yaml_data
+        except Exception as e:
+            logger.error(f"Failed to load models configuration from YAML file: {e}")
             raise

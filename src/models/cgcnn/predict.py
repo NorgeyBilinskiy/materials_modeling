@@ -4,13 +4,15 @@ Prediction module for CGCNN model.
 
 import os
 import logging
-import torch
-import numpy as np
 from typing import List, Dict
+
+
+import numpy as np
+import torch
 from pymatgen.core import Structure
 
 from .train import load_trained_model
-from src.data_preprocessing import create_graph_features
+from src import create_graph_features
 
 logger = logging.getLogger(__name__)
 

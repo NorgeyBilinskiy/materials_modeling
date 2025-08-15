@@ -86,3 +86,33 @@ def create_schnet_model(
         cutoff=cutoff,
         dropout=dropout,
     )
+
+
+class SchNetLoss(nn.Module):
+    """
+    Loss function for SchNet training.
+    """
+
+    def __init__(self, loss_type: str = "mse"):
+        super().__init__()
+        if loss_type == "mse":
+            self.loss_fn = nn.MSELoss()
+        elif loss_type == "mae":
+            self.loss_fn = nn.L1Loss()
+        elif loss_type == "huber":
+            self.loss_fn = nn.SmoothL1Loss()
+        else:
+            raise ValueError(f"Unknown loss type: {loss_type}")
+
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Compute loss between predictions and targets.
+
+        Args:
+            pred: Predicted formation energies
+            target: Target formation energies
+
+        Returns:
+            Loss value
+        """
+        return self.loss_fn(pred, target)
