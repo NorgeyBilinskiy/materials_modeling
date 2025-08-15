@@ -60,3 +60,6 @@ hparams.json
 */checkpoints/*
 
 # Logs
+/logs/*
+!/logs/.gitkeep
+!/logs/.logs_for_example.log
