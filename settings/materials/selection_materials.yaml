@@ -3,8 +3,6 @@ formulas_substances:
   - KCl
   - KBr
   - LiF
-
-  # Other alkali metals with halogens
   - NaBr
   - NaI
   - KF
