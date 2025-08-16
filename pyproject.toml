@@ -1,7 +1,7 @@
 [project]
-name = "multiscale-materials-modeling"
+name = "materials-modeling-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered prediction of formation energy for compounds with various crystal structures using deep learning models (CGCNN, MEGNet, MPNN, SchNet)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
