@@ -3,6 +3,8 @@ result_models.json
 LICENSE
 .python-version
 
+reports/
+
 .venv/
 .gitignore
 
